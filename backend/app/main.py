@@ -21,3 +21,8 @@ app.add_middleware(
 @app.get("/api/health")
 def health():
     return {"ok": True, "paypal_mode": settings.paypal_mode}
+
+
+from .routers import auth  # noqa: E402
+
+app.include_router(auth.router)
