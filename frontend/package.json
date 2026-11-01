@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predev": "node scripts/copy-zk.mjs",
+    "prebuild": "node scripts/copy-zk.mjs"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^10.6.1",
