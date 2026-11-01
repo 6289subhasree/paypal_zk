@@ -23,6 +23,7 @@ def health():
     return {"ok": True, "paypal_mode": settings.paypal_mode}
 
 
-from .routers import auth  # noqa: E402
+from .routers import auth, credentials  # noqa: E402
 
-app.include_router(auth.router)
+for r in (auth, credentials):
+    app.include_router(r.router)
