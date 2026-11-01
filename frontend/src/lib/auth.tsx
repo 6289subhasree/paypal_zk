@@ -17,14 +17,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!getToken()) {
-      setLoading(false);
-      return;
-    }
-    api<User>("/api/auth/me")
-      .then(setUser)
-      .catch(() => setToken(null))
-      .finally(() => setLoading(false));
+    const check = getToken()
+      ? api<User>("/api/auth/me").then(setUser).catch(() => setToken(null))
+      : Promise.resolve();
+    check.finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

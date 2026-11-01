@@ -41,9 +41,9 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
   }, [requestId]);
 
   useEffect(() => {
-    load();
+    api<PaymentRequest>(`/api/payments/requests/${requestId}`).then(setReq).catch((e) => setError(e.message));
     api<Credential[]>("/api/credentials/me").then((cs) => setCred(cs.find((c) => c.status === "active") ?? null)).catch(() => {});
-  }, [load]);
+  }, [requestId]);
 
   useEffect(() => {
     if (!req || !user) return;
@@ -83,7 +83,7 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
         bundle = await provePayment({ secret, material: cred.proof_material, request: req });
         if (kind === "tampered") {
           const pi_a = [...(bundle.proof.pi_a as string[])];
-          pi_a[0] = (BigInt(pi_a[0]) + 1n).toString();
+          pi_a[0] = (BigInt(pi_a[0]) + BigInt(1)).toString();
           bundle = { ...bundle, proof: { ...bundle.proof, pi_a } };
         }
       }

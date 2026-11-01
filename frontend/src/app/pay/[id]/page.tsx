@@ -1,13 +1,20 @@
 "use client";
 import { useParams } from "next/navigation";
+import { Suspense } from "react";
 import { PaymentFlow } from "@/components/PaymentFlow";
 import { Shell } from "@/components/Shell";
 
-export default function Page() {
+function Flow() {
   const { id } = useParams<{ id: string }>();
+  return <PaymentFlow requestId={id} />;
+}
+
+export default function Page() {
   return (
-    <Shell>
-      <PaymentFlow requestId={id} />
-    </Shell>
+    <Suspense>
+      <Shell>
+        <Flow />
+      </Shell>
+    </Suspense>
   );
 }

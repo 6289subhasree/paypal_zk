@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PassportDoc } from "@/components/PassportDoc";
 import { Shell } from "@/components/Shell";
 import { ErrorNote, PageTitle, Spinner } from "@/components/ui";
@@ -14,7 +14,6 @@ function Passport() {
   const [kyc, setKyc] = useState<KycSession | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [hasSecret, setHasSecret] = useState(false);
 
   useEffect(() => {
     api<Credential[]>("/api/credentials/me").then(setCreds).catch((e) => setError(e.message));
@@ -23,10 +22,10 @@ function Passport() {
 
   const active = creds?.find((c) => c.status === "active") ?? null;
 
-  useEffect(() => {
-    if (!user || !active?.proof_material) return;
+  const hasSecret = useMemo(() => {
+    if (!user || !active?.proof_material) return false;
     const secret = getHolderSecret(user.id);
-    setHasSecret(!!secret && holderCommitment(secret) === active.proof_material.holderCommitment);
+    return !!secret && holderCommitment(secret) === active.proof_material.holderCommitment;
   }, [user, active]);
 
   async function issue() {
@@ -40,7 +39,6 @@ function Passport() {
         json: { holder_commitment: holderCommitment(secret) },
       });
       setCreds((cs) => [cred, ...(cs ?? []).map((c) => (c.status === "active" ? { ...c, status: "revoked" as const } : c))]);
-      setHasSecret(true);
     } catch (e) {
       setError((e as Error).message);
     } finally {
