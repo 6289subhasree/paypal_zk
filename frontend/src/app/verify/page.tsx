@@ -271,7 +271,9 @@ function Assistant({ session, step, onReply }: { session: KycSession | null; ste
   const [sending, setSending] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const transcript = session?.transcript ?? [];
-  useEffect(() => end.current?.scrollIntoView({ block: "nearest" }), [transcript.length]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: "nearest" });
+  }, [transcript.length]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
