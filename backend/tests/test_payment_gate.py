@@ -28,15 +28,10 @@ def test_replayed_proof_rejected(client, make_user):
     payer = holder_with_credential(client, make_user)
     body = make_proof(payer, req)
     assert authorize(client, payer, req, body)["authorized"] is True
-    # Same proof against a second request bound to the same challenge cannot happen,
-    # so replay it on the same request after re-opening it.
-    from app.db import SessionLocal
-    from app.models import PaymentRequest
-    with SessionLocal() as db:
-        db.get(PaymentRequest, req["id"]).status = "open"
-        db.commit()
-    res = authorize(client, payer, req, body)
-    assert res == {"authorized": False, "code": "replayed", "reason": res["reason"]}
+    # Resubmitting the same proof is caught by the nullifier
+    assert authorize(client, payer, req, body)["code"] == "replayed"
+    # So is a freshly generated proof for the same payment: the nullifier is deterministic
+    assert authorize(client, payer, req, make_proof(payer, req))["code"] == "replayed"
 
 
 def test_proof_for_other_payment_rejected(client, make_user):

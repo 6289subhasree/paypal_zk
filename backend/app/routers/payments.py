@@ -106,7 +106,9 @@ def authorize(request_id: str, body: AuthorizeIn, user: User = Depends(current_u
         raise HTTPException(404, "Payment request not found")
     if pr.recipient_user_id == user.id:
         raise HTTPException(400, "You cannot pay your own payment request")
-    if pr.status != "open" or _aware(pr.expires_at) <= utcnow():
+    # Expired or cancelled requests stop here. Already-authorized or paid requests go on
+    # through verification so a reused proof is reported as a replay, not a vague error.
+    if pr.status in ("expired", "cancelled") or (pr.status == "open" and _aware(pr.expires_at) <= utcnow()):
         raise HTTPException(409, "This payment request is no longer open")
 
     # 1. Cryptographic verification against the circuit's verification key
@@ -141,6 +143,9 @@ def authorize(request_id: str, body: AuthorizeIn, user: User = Depends(current_u
     except IntegrityError:
         db.rollback()
         return _reject(db, user, pr, body, "replayed", s["nullifier"])
+    if pr.status != "open":  # defensive: an unused nullifier can't reach a non-open request
+        db.rollback()
+        raise HTTPException(409, "This payment request is no longer open")
 
     cred = db.query(Credential).filter_by(revocation_tag=s["revocation_tag"]).first()
     proof = Proof(user_id=user.id, credential_id=cred.id if cred else None, payment_request_id=pr.id,
