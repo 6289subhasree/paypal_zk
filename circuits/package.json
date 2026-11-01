@@ -1,10 +1,11 @@
 {
-  "name": "circuits",
+  "name": "zkpass-circuits",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test --test-timeout=300000 test/*.test.mjs",
+    "setup": "./scripts/setup.sh"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,6 @@
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.7",
     "snarkjs": "^0.7.6"
-  }
+  },
+  "type": "module"
 }
