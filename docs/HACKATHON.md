@@ -1,28 +1,31 @@
 # PayPal AI Hackathon — Compliance Checklist
 
 Hackathon: **Build What's Next with PayPal and AI** (Devpost)
-Submission deadline: **Nov 12, 2026**
+Submission deadline: **Nov 12, 2026**. Recheck the official rules page for the exact time zone.
 
 ## Core requirement
 The project must meaningfully use **both PayPal and AI**.
 
 | Requirement | How this project meets it | Status |
 |---|---|---|
-| PayPal developer platform (Sandbox) | Orders API v2: create + server-side capture, JS SDK checkout, gated by ZK proof | ⬜ |
-| AI tool / model | KYC assistant, document field extraction + inconsistency explanation, reviewer evidence summary, plain-language proof-rejection explanations | ⬜ |
+| PayPal developer platform (Sandbox) | Orders API v2 create, server-side capture with idempotency and response validation, JS SDK buyer approval, all gated by a ZK proof | ✅ built, needs a live Sandbox run |
+| AI tool / model | KYC assistant, OCR field extraction, plain-language explanation of failed checks, neutral reviewer evidence summary (Ollama local or Gemini free tier) | ✅ built |
 
 ## Submission requirements
-- [ ] Functional demo: hosted URL **or** full setup/run instructions in README (mockups don't count)
-- [ ] Project description on Devpost (English)
-- [ ] Public repo with an open-source license (MIT — see `LICENSE`)
-- [ ] Public YouTube demo video, **under 3 minutes**
+- [x] Functional demo with full setup and run instructions in README (mockups don't count)
+- [x] Public repo with an open-source license (MIT, see `LICENSE`)
+- [x] AI tools and models disclosed (README → *AI tools & models*)
+- [ ] Add PayPal Sandbox credentials to `backend/.env` and do one real capture
+- [ ] Optional but strong: deploy a hosted demo URL
+- [ ] Record the demo video, **under 3 minutes**, following `docs/DEMO.md`
+- [ ] Upload it to YouTube as **public** and paste the link into Devpost
 - [ ] Video uses no third-party trademarks, copyrighted music or protected material without permission
-- [ ] Disclose AI tools/models used (see README → *AI Tools & Models*)
-- [ ] All Devpost fields complete; recheck official rules for amendments before submitting
+- [ ] Write the Devpost project description in English
+- [ ] Fill in every Devpost field and recheck the official rules for amendments before submitting
 
 ## Branding note
-The product name avoids using PayPal's trademark as our own brand. "PayPal" appears only
-to describe the integration (e.g. "PayPal Sandbox checkout"). The app states it is an
+The product is named **ZK Pass**, not "ZK PayPal", so it doesn't use PayPal's trademark as its
+own brand. "PayPal" appears only to describe the integration, and the app states that it is an
 independent prototype, not an official PayPal product.
 
 ## Prize categories worth targeting
