@@ -3,11 +3,11 @@ import { LandingPassport } from "@/components/LandingPassport";
 
 export default function Landing() {
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh overflow-x-clip">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
         <span className="font-display text-2xl font-extrabold tracking-tight">ZK Pass</span>
         <nav className="flex gap-2">
-          <Link href="/login" className="btn btn-quiet">Sign in</Link>
+          <Link href="/login" className="btn btn-quiet hidden sm:inline-flex">Sign in</Link>
           <Link href="/register" className="btn">Create account</Link>
         </nav>
       </header>

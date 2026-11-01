@@ -22,7 +22,7 @@ export function LandingPassport() {
     return () => clearTimeout(t);
   }, []);
   return (
-    <div className="rotate-[1.5deg]">
+    <div className="lg:rotate-[1.5deg]">
       <PassportDoc
         holderName="Asha Verma"
         credential={demoCredential}

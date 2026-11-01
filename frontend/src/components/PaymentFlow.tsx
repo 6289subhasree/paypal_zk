@@ -169,7 +169,8 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
 
             {outcome?.kind === "rejected" && (
               <p className="rounded-xl bg-reject-soft px-4 py-3 text-reject" role="alert">
-                <strong>{outcome.code.replace("_", " ")}:</strong> {outcome.reason} Checkout stays locked.
+                <strong>{outcome.code.replace("_", " ")}:</strong> {outcome.reason}{" "}
+                {unlocked ? "Only the original proof authorized this payment." : "Checkout stays locked."}
               </p>
             )}
 

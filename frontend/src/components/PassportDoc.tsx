@@ -51,7 +51,8 @@ export function PassportDoc({
         </div>
       </div>
 
-      {stamp && <div className="pointer-events-none absolute right-6 top-20 sm:right-10">{stamp}</div>}
+      {/* Stamped across the page break, like an entry stamp, so it never hides a field */}
+      {stamp && <div className="pointer-events-none absolute bottom-10 right-4 sm:right-8">{stamp}</div>}
     </figure>
   );
 }
@@ -64,7 +65,7 @@ function Field({ label, value, private: isPrivate, tone }: { label: string; valu
         {label}
         {isPrivate && <span className="ml-1.5 text-teal">(stays with you)</span>}
       </dt>
-      <dd className={`font-semibold capitalize ${color}`}>{value}</dd>
+      <dd className={`font-semibold ${tone ? "capitalize" : ""} ${color}`}>{value}</dd>
     </div>
   );
 }
