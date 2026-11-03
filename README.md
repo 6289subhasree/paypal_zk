@@ -71,13 +71,9 @@ With `LLM_PROVIDER=none`, the app runs fully offline apart from PayPal.
 
 ## AI tools & models
 
-**Inside the product**
 - **Ollama with `llama3.2:3b`** (default, runs locally) or **Google Gemini `gemini-2.0-flash`** (free tier), selected by `LLM_PROVIDER`.
 - Used to guide the user step by step, extract structured fields from noisy OCR text, explain failed checks in plain language, and write a neutral evidence summary for the reviewer.
 - Guardrails: the model never approves or rejects a session and never judges identity or liveness from a face, voice or tone. Approval is a human decision backed by deterministic checks. If no model is reachable, deterministic templates take over so the flow never breaks.
-
-**Used to build the project**
-- Anthropic **Claude** was used as a coding assistant during development.
 
 ## Run it locally
 
