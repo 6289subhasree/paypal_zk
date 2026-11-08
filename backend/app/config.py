@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     paypal_client_id: str = ""
     paypal_client_secret: str = ""
 
+    # OCR: full path to tesseract if it isn't on PATH,
+    # e.g. C:\\Program Files\\Tesseract-OCR\\tesseract.exe on Windows
+    tesseract_cmd: str = ""
+
     # AI (free / local by default)
     llm_provider: str = "ollama"  # ollama | gemini | none
     ollama_url: str = "http://localhost:11434"

@@ -15,6 +15,11 @@ from PIL import Image, ImageOps
 def ocr_image(data: bytes) -> str:
     import pytesseract
 
+    from .config import get_settings
+
+    if cmd := get_settings().tesseract_cmd:
+        pytesseract.pytesseract.tesseract_cmd = cmd
+
     img = Image.open(io.BytesIO(data))
     img = ImageOps.exif_transpose(img).convert("L")
     if img.width < 1200:  # upscale small photos for better OCR
