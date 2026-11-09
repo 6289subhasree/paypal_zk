@@ -48,11 +48,12 @@ def valid_format(doc_type: str | None, number: str | None) -> bool:
     return False
 
 
-def run_checks(declared: dict, extracted: dict, ocr_chars: int, liveness_done: bool) -> list[dict]:
+def run_checks(declared: dict, extracted: dict, ocr_chars: int, liveness_method: str | None) -> list[dict]:
     checks = []
 
-    def add(name, label, passed, detail, simulated=False):
-        checks.append({"name": name, "label": label, "passed": bool(passed), "detail": detail, "simulated": simulated})
+    def add(name, label, passed, detail, simulated=False, on_device=False):
+        checks.append({"name": name, "label": label, "passed": bool(passed), "detail": detail,
+                       "simulated": simulated, "on_device": on_device})
 
     add("ocr_readable", "Document is readable", ocr_chars >= 30,
         f"{ocr_chars} characters recognised" if ocr_chars >= 30 else "Too little text recognised; retake the photo")
@@ -80,7 +81,13 @@ def run_checks(declared: dict, extracted: dict, ocr_chars: int, liveness_done: b
         adult = False
     add("age_18", "Holder is 18 or older", adult, "Based on declared date of birth")
 
-    add("liveness", "Liveness check", liveness_done,
-        "Simulated for the hackathon: no face or biometric analysis is performed" if liveness_done
-        else "Liveness step not completed", simulated=True)
+    if liveness_method == "on_device":
+        add("liveness", "Liveness check", True,
+            "Blink and head-turn challenges passed with MediaPipe in the user's browser. No video left the "
+            "device. Not a certified liveness check: the result is reported by the browser.", on_device=True)
+    elif liveness_method == "simulated":
+        add("liveness", "Liveness check", True,
+            "Simulated for the hackathon: no face or biometric analysis is performed", simulated=True)
+    else:
+        add("liveness", "Liveness check", False, "Liveness step not completed", simulated=True)
     return checks

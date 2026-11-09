@@ -25,10 +25,10 @@ SYSTEM = (
 )
 
 STEPS = {
-    "welcome": "Explain the session: consent, using a test document marked SPECIMEN, a simulated liveness step, and human review.",
+    "welcome": "Explain the session: consent, using a test document marked SPECIMEN, a short liveness check, and human review.",
     "details": "Ask the user to enter their full name and date of birth exactly as on the test document.",
     "document": "Ask the user to upload the test document image and explain that only masked fields are kept.",
-    "liveness": "Explain that liveness is simulated in this demo and they just need to follow the on-screen prompt.",
+    "liveness": "Explain the liveness check: blink twice and turn the head left and right while the camera runs in the browser. Nothing is recorded or uploaded, and it is not a certified check. Without a camera the step is simulated and labelled as such.",
     "submit": "Explain that the evidence goes to a human reviewer and what happens after approval.",
 }
 
@@ -72,10 +72,10 @@ def _chat(messages: list[dict], want_json: bool = False) -> str | None:
 # ---------- guided assistant ----------
 
 _FALLBACK_REPLIES = {
-    "welcome": "Hi! I'll guide you through a demo identity check. We only use a test document marked SPECIMEN, liveness is simulated, and a human reviewer makes the final decision. Ready to start?",
+    "welcome": "Hi! I'll guide you through a demo identity check. We only use a test document marked SPECIMEN, there's a short liveness check in your browser, and a human reviewer makes the final decision. Ready to start?",
     "details": "Please enter your full name and date of birth exactly as they appear on your test document.",
     "document": "Now upload a photo or scan of your SPECIMEN test document. I'll read the fields with OCR and keep only masked values.",
-    "liveness": "This step is simulated for the demo. Follow the prompt on screen, it just records that the step happened.",
+    "liveness": "Turn on your camera, then blink twice and turn your head left and right when asked. It all runs in your browser; nothing is recorded or uploaded. If you have no camera, you can use the simulated step instead.",
     "submit": "All set. Your evidence summary goes to a human reviewer. Once approved, you can issue your ZK Passport.",
 }
 
