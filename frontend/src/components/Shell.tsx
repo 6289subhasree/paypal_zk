@@ -34,6 +34,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ZK Pass
           </Link>
           <nav className="flex items-center gap-1 text-[15px]" aria-label="Account">
+            <Link href="/payouts" className="rounded-full px-3 py-1.5 hover:bg-paper-deep">Payouts</Link>
             <Link href="/history" className="rounded-full px-3 py-1.5 hover:bg-paper-deep">History</Link>
             {user.role === "reviewer" && (
               <Link href="/review" className="rounded-full px-3 py-1.5 hover:bg-paper-deep">Review queue</Link>
