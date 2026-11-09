@@ -11,6 +11,7 @@ export function ChecksList({ checks }: { checks: Check[] }) {
           <span className="flex-1">
             <span className="font-semibold">{c.label}</span>
             {c.simulated && <span className="ml-2"><Badge tone="sim">Simulated</Badge></span>}
+            {c.on_device && <span className="ml-2"><Badge tone="neutral">On-device, not certified</Badge></span>}
             <span className="block text-sm text-ink-soft">{c.detail}</span>
           </span>
           <span className="sr-only">{c.passed ? "passed" : "failed"}</span>

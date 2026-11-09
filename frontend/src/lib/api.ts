@@ -55,7 +55,14 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
 // ---- shared types ----
 export type User = { id: string; email: string; display_name: string; role: "user" | "reviewer" };
 
-export type Check = { name: string; label: string; passed: boolean; detail: string; simulated?: boolean };
+export type Check = {
+  name: string;
+  label: string;
+  passed: boolean;
+  detail: string;
+  simulated?: boolean;
+  on_device?: boolean;
+};
 
 export type KycSession = {
   id: string;
