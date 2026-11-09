@@ -168,6 +168,20 @@ class Payout(Base):
     sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
+class SavedWallet(Base):
+    """A buyer's PayPal wallet saved with PayPal Vault, for one-click repeat payments.
+
+    Only PayPal's token is stored; the wallet itself stays with PayPal.
+    """
+    __tablename__ = "saved_wallets"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    vault_id: Mapped[str] = mapped_column(String(64))
+    customer_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payer_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    environment: Mapped[str] = mapped_column(String(10), default="sandbox")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)

@@ -52,14 +52,35 @@ def _request(method: str, path: str, idempotency_key: str | None = None, json: d
     return r.json()
 
 
-def create_order(reference_id: str, amount: str, currency: str, description: str) -> dict:
-    return _request("POST", "/v2/checkout/orders", idempotency_key=f"create-{reference_id}", json={
+def _purchase_unit(reference_id: str, amount: str, currency: str, description: str) -> dict:
+    return {
+        "reference_id": reference_id,
+        "description": (description or "ZK Pass payment")[:127],
+        "amount": {"currency_code": currency, "value": amount},
+    }
+
+
+def create_order(reference_id: str, amount: str, currency: str, description: str,
+                 save_wallet: bool = False, return_url: str = "") -> dict:
+    body: dict = {"intent": "CAPTURE", "purchase_units": [_purchase_unit(reference_id, amount, currency, description)]}
+    if save_wallet:
+        # Ask PayPal to vault the buyer's PayPal wallet once the capture succeeds.
+        body["payment_source"] = {"paypal": {
+            "attributes": {"vault": {"store_in_vault": "ON_SUCCESS", "usage_type": "MERCHANT",
+                                     "customer_type": "CONSUMER"}},
+            "experience_context": {"return_url": return_url, "cancel_url": return_url,
+                                   "shipping_preference": "NO_SHIPPING", "user_action": "PAY_NOW"},
+        }}
+    key = f"create-{reference_id}{'-vault' if save_wallet else ''}"
+    return _request("POST", "/v2/checkout/orders", idempotency_key=key, json=body)
+
+
+def create_vaulted_order(reference_id: str, amount: str, currency: str, description: str, vault_id: str) -> dict:
+    """Charge a saved PayPal wallet: no buyer popup, PayPal usually completes it immediately."""
+    return _request("POST", "/v2/checkout/orders", idempotency_key=f"vaulted-{reference_id}", json={
         "intent": "CAPTURE",
-        "purchase_units": [{
-            "reference_id": reference_id,
-            "description": (description or "ZK Pass payment")[:127],
-            "amount": {"currency_code": currency, "value": amount},
-        }],
+        "payment_source": {"paypal": {"vault_id": vault_id}},
+        "purchase_units": [_purchase_unit(reference_id, amount, currency, description)],
     })
 
 
