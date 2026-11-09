@@ -11,8 +11,8 @@ export const KEYS_DIR = path.join(HERE, "..", "keys");
 export const WASM_PATH = path.join(KEYS_DIR, "kyc_payment.wasm");
 export const ZKEY_PATH = path.join(KEYS_DIR, "kyc_payment.zkey");
 export const VKEY_PATH = path.join(KEYS_DIR, "verification_key.json");
-export const CIRCUIT_VERSION = "kyc_payment@1";
-export const SCHEMA_VERSION = 1n;
+export const CIRCUIT_VERSION = "kyc_payment@2";
+export const SCHEMA_VERSION = 2n;
 
 // BN254 scalar field
 export const FIELD =
@@ -49,13 +49,14 @@ export function newIssuerPrivateKey() {
   return randomBytes(32).toString("hex");
 }
 
-export async function credentialMessage({ credentialId, holderCommitment, kycApproved, expiresAt }) {
+export async function credentialMessage({ credentialId, holderCommitment, kycApproved, expiresAt, birthDate }) {
   return poseidonHash([
     SCHEMA_VERSION,
     BigInt(credentialId),
     BigInt(holderCommitment),
     BigInt(kycApproved),
     BigInt(expiresAt),
+    BigInt(birthDate),
   ]);
 }
 
@@ -92,7 +93,12 @@ export async function revocationTag(credentialId, verifierId) {
   return (await poseidonHash([BigInt(credentialId), BigInt(verifierId)])).toString();
 }
 
-export function buildProofInput({ issuerPub, now, paymentChallenge, verifierId, holderSecret, credential }) {
+/** Today as a YYYYMMDD integer in UTC, the date format the age check uses. */
+export function todayYmd(date = new Date()) {
+  return date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate();
+}
+
+export function buildProofInput({ issuerPub, now, paymentChallenge, verifierId, holderSecret, credential, today, minAge = 0 }) {
   return {
     issuer_ax: issuerPub.ax,
     issuer_ay: issuerPub.ay,
@@ -103,6 +109,9 @@ export function buildProofInput({ issuerPub, now, paymentChallenge, verifierId, 
     credential_id: String(credential.credentialId),
     kyc_approved: String(credential.kycApproved),
     expires_at: String(credential.expiresAt),
+    birth_date: String(credential.birthDate),
+    today: String(today ?? todayYmd(new Date(Number(now) * 1000))),
+    min_age: String(minAge),
     sig_s: credential.signature.s,
     sig_r8x: credential.signature.r8x,
     sig_r8y: credential.signature.r8y,
@@ -116,9 +125,13 @@ export async function prove(input, { wasm = WASM_PATH, zkey = ZKEY_PATH } = {}) 
 }
 
 // Public signal order: outputs first, then public inputs in declaration order.
+export const PUBLIC_SIGNALS = [
+  "nullifier", "revocation_tag", "issuer_ax", "issuer_ay", "now",
+  "payment_challenge", "verifier_id", "today", "min_age",
+];
+
 export function parsePublicSignals(ps) {
-  const [nullifier, revocation_tag, issuer_ax, issuer_ay, now, payment_challenge, verifier_id] = ps;
-  return { nullifier, revocation_tag, issuer_ax, issuer_ay, now, payment_challenge, verifier_id };
+  return Object.fromEntries(PUBLIC_SIGNALS.map((name, i) => [name, ps[i]]));
 }
 
 let _vkey;
