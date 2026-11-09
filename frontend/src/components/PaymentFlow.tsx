@@ -163,7 +163,14 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
                   <h2 className="text-2xl font-bold">Checkout unlocked</h2>
                   <p className="mt-1 text-ink-soft">Your proof was verified for this payment. Pay with a PayPal Sandbox buyer account.</p>
                 </div>
-                <Checkout req={req} onCaptured={setTx} onError={setError} />
+                <Checkout
+                  req={req}
+                  onCaptured={(t) => {
+                    setTx(t);
+                    setReq((r) => (r ? { ...r, status: "paid" } : r));
+                  }}
+                  onError={setError}
+                />
               </>
             )}
 
