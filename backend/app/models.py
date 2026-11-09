@@ -85,6 +85,8 @@ class Credential(Base):
     signature_reference: Mapped[dict] = mapped_column(JSON)  # {s, r8x, r8y}
     revocation_tag: Mapped[str] = mapped_column(String(100), index=True)
     circuit_version: Mapped[str] = mapped_column(String(40))
+    # YYYYMMDD from the approved KYC session; signed into the credential for age proofs
+    birth_date: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class PaymentRequest(Base):
@@ -96,6 +98,7 @@ class PaymentRequest(Base):
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     description: Mapped[str] = mapped_column(String(200), default="")
     challenge: Mapped[str] = mapped_column(String(100))  # field element bound into the proof
+    min_age: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)  # 0 = no age check
     # open | authorized | paid | expired | cancelled
     status: Mapped[str] = mapped_column(String(20), default="open")
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
