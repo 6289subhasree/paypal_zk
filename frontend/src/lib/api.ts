@@ -117,6 +117,27 @@ export type PaymentRequest = {
   transaction?: Transaction | null;
 };
 
+/** Anything a proof can be bound to: a payment request or a payout. */
+export type ProofTarget = Pick<PaymentRequest, "challenge" | "verifier_id" | "issuer_public_key" | "min_age" | "today">;
+
+export type Payout = ProofTarget & {
+  id: string;
+  amount: string;
+  currency: string;
+  note: string;
+  sender: { id: string; display_name: string };
+  recipient_user_id: string | null;
+  status: "awaiting_proof" | "sending" | "sent" | "failed" | "expired";
+  environment: string;
+  expires_at: string;
+  created_at: string;
+  sent_at: string | null;
+  provider_batch_id: string | null;
+  provider_item_status: string | null;
+  receiver_email?: string | null;
+  role?: "sender" | "recipient";
+};
+
 export type Transaction = {
   id: string;
   payment_request_id: string;

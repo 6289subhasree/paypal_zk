@@ -2,7 +2,7 @@
 // Browser-side holder wallet and prover. The holder secret is created and kept in
 // this browser only; the server sees a Poseidon commitment to it, never the secret.
 import { poseidon1 } from "poseidon-lite";
-import type { PaymentRequest, ProofMaterial } from "./api";
+import type { ProofMaterial, ProofTarget } from "./api";
 
 const secretKey = (userId: string) => `zkpass.holder_secret.${userId}`;
 
@@ -40,7 +40,7 @@ export type ProofBundle = {
 export async function provePayment(opts: {
   secret: string;
   material: ProofMaterial;
-  request: PaymentRequest;
+  request: ProofTarget;
   now?: number;
 }): Promise<ProofBundle> {
   const { secret, material, request } = opts;
