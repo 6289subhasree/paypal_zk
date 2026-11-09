@@ -172,8 +172,9 @@ function DocumentStep({ session, busy, onUpload, onNext }: { session: KycSession
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Upload the test document</h2>
-      <label className="block rounded-2xl border-2 border-dashed border-line p-6 text-center hover:bg-paper-deep">
-        <span className="font-semibold">Choose a PNG or JPEG</span>
+      <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-line p-6 text-center hover:bg-paper-deep focus-within:ring-2">
+        <span className="btn pointer-events-none inline-flex">Choose file</span>
+        <span className="mt-3 block font-semibold">PNG, JPEG or WebP</span>
         <span className="mt-1 block text-sm text-ink-soft">Try samples/specimen_pan_card.png, or mismatch_name_card.png to see failed checks.</span>
         <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
           onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
