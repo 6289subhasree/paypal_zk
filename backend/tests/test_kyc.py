@@ -21,6 +21,23 @@ def test_consent_required(client, make_user):
     assert client.post("/api/kyc/sessions", json={"consent": False}, headers=u["headers"]).status_code == 400
 
 
+def test_missing_ocr_engine_is_reported_as_setup_error(client, make_user, monkeypatch):
+    import pytesseract
+
+    from app.routers import kyc
+
+    def no_tesseract(_data):
+        raise pytesseract.TesseractNotFoundError()
+
+    monkeypatch.setattr(kyc, "ocr_image", no_tesseract)
+    h = make_user()["headers"]
+    s = client.post("/api/kyc/sessions", json={"consent": True}, headers=h).json()
+    with open(SAMPLES / "specimen_pan_card.png", "rb") as f:
+        up = client.post(f"/api/kyc/sessions/{s['id']}/documents", files={"file": ("c.png", f, "image/png")}, headers=h)
+    assert up.status_code == 503
+    assert "OCR engine" in up.json()["detail"]
+
+
 def test_matching_specimen_passes_checks_and_waits_for_human(client, make_user):
     res = run_session(client, make_user())
     assert res["status"] == "needs_review"  # AI never approves

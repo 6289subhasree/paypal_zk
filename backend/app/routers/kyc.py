@@ -1,4 +1,5 @@
 """ZK Verify AI: guided KYC session lifecycle and human review (FR-02 – FR-05)."""
+import logging
 from datetime import date
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -13,6 +14,7 @@ from ..models import KycSession, User, utcnow
 from ..security import current_user, require_reviewer
 
 router = APIRouter(tags=["kyc"])
+log = logging.getLogger(__name__)
 MAX_UPLOAD = 8 * 1024 * 1024
 ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp"}
 
@@ -109,7 +111,11 @@ async def upload_document(session_id: str, file: UploadFile = File(...),
         raise HTTPException(413, "Image is larger than 8 MB")
     try:
         text = ocr_image(data)
-    except Exception:
+    except Exception as exc:
+        # A missing Tesseract binary is a server setup problem, not a bad upload
+        if type(exc).__name__ == "TesseractNotFoundError":
+            log.error("Tesseract not found; install it or set TESSERACT_CMD in backend/.env")
+            raise HTTPException(503, "OCR engine is not installed on the server")
         raise HTTPException(422, "Could not read this image")
     finally:
         del data  # the raw document is never persisted
