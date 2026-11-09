@@ -33,7 +33,7 @@ The payment page has a "Try to break it" panel. An altered proof, a real proof f
 - **PayPal:** REST Orders API v2 (OAuth2, create, capture) with `PayPal-Request-Id` idempotency keys. The capture is validated against status, reference ID, amount and currency before a payment is marked paid. The PayPal JavaScript SDK handles buyer approval.
 - **AI:** a local LLM through Ollama (`llama3.2:3b`) or the Gemini API free tier, with an offline template fallback. It's used for guidance, OCR field extraction, failed-check explanations and reviewer summaries.
 - **Frontend:** Next.js 16, React 19 and Tailwind v4. The passport is drawn as a security-printed document, and proof results land on it as stamps.
-- **Tests:** 9 circuit tests and 30 backend tests covering tampered proofs, altered public inputs, wrong-payment binding, replay, expiry, revocation, rogue issuers and holder substitution.
+- **Tests:** 9 circuit tests and 32 backend tests covering tampered proofs, altered public inputs, wrong-payment binding, replay, expiry, revocation, rogue issuers and holder substitution.
 
 No paid APIs. Everything except PayPal Sandbox can run offline.
 
