@@ -22,13 +22,24 @@ and the backend captures and validates the order server-side.
 
 | Module | What happens |
 |---|---|
-| **ZK Verify AI** | An AI assistant guides a KYC session. Tesseract OCR reads a SPECIMEN test card, rule-based checks compare it with what the user typed, liveness is **simulated and labelled**, and the AI writes a neutral evidence summary. A **human reviewer** approves or rejects. |
-| **ZK Passport** | The browser creates a holder secret and sends only `Poseidon(secret)`. The issuer signs the credential (EdDSA on BabyJubJub over a Poseidon hash) with the `kyc_approved` claim and an expiry date. |
-| **ZK Pay** | For each payment request, the browser proves in-circuit: valid issuer signature, holder binding, `kyc_approved = 1`, not expired. It outputs a one-time **nullifier** bound to that payment and a verifier-scoped **revocation tag**. |
+| **ZK Verify AI** | An AI assistant guides a KYC session. Tesseract OCR reads a SPECIMEN test card, rule-based checks compare it with what the user typed, an **on-device liveness check** (MediaPipe: blink and head-turn prompts in random order) runs in the browser, and the AI writes a neutral evidence summary. A **human reviewer** approves or rejects. |
+| **ZK Passport** | The browser creates a holder secret and sends only `Poseidon(secret)`. The issuer signs the credential (EdDSA on BabyJubJub over a Poseidon hash) with the `kyc_approved` claim, an expiry date and the date of birth. |
+| **ZK Pay** | For each payment, the browser proves in-circuit: valid issuer signature, holder binding, `kyc_approved = 1`, not expired, and, when the merchant asks, **age ≥ 18 without revealing the birth date**. It outputs a one-time **nullifier** bound to that payment and a verifier-scoped **revocation tag**. |
 
 The backend rejects proofs that are **altered**, **bound to another payment**, **stale**,
-from an **untrusted issuer**, **revoked**, or **replayed**. Checkout stays locked until a
-proof passes. The payment page has a *Try to break it* panel that demonstrates each case.
+from an **untrusted issuer**, **revoked**, **replayed**, or missing the request's **age requirement**.
+Checkout stays locked until a proof passes. The payment page has a *Try to break it* panel
+that demonstrates each case.
+
+### What the proof unlocks in PayPal
+
+| Feature | PayPal API | What the ZK proof gates |
+|---|---|---|
+| **Checkout** | Orders v2 create + capture, JS SDK | The buyer can't open checkout until a fresh, payment-bound proof passes. The backend validates the capture before marking it paid. |
+| **18+ purchases** | Orders v2 | The merchant marks a request 18+; only a holder whose signed birth date proves they're old enough can unlock it. |
+| **One-click repeat payments** | Orders v2 with PayPal **Vault** (`store_in_vault`, `vault_id`) | Save PayPal once, then pay later with no popup. A saved wallet never skips the proof: each payment still needs its own. |
+| **Refunds** | Payments v2 capture refund | Only the merchant who was paid can refund; repeat refunds are idempotent. |
+| **Payouts to verified people** | Payouts v1 | A platform pays a freelancer only after *the recipient* proves KYC with their Passport; each payout is claimed once. |
 
 | A proof bound to another payment is rejected | A valid proof unlocks a real PayPal Sandbox capture |
 |---|---|
@@ -40,10 +51,11 @@ proof passes. The payment page has a *Try to break it* panel that demonstrates e
 
 ### The privacy property
 
-The verifier receives seven public values: the nullifier, revocation tag, issuer public key,
-timestamp, payment challenge and verifier ID. It never sees the user's name, date of birth,
-document number, credential ID or holder secret. Raw document images are processed in memory
-and discarded; only masked fields and check outcomes are stored.
+The verifier receives nine public values: the nullifier, revocation tag, issuer public key,
+timestamp, payment challenge, verifier ID, today's date and the required minimum age. It never
+sees the user's name, date of birth, document number, credential ID or holder secret. Raw
+document images are processed in memory and discarded; only masked fields and check outcomes
+are stored. Liveness runs entirely in the browser: no video or face data is uploaded.
 
 ## Architecture
 
@@ -52,13 +64,14 @@ flowchart LR
     subgraph Browser
       UI[Next.js app] --> W[Holder secret<br/>localStorage]
       UI --> P[snarkjs prover<br/>Groth16]
+      UI --> L[MediaPipe liveness<br/>on-device]
     end
     UI -->|REST| API[FastAPI]
     API --> KYC[KYC: OCR + rules]
     API --> AI[AI: Ollama / Gemini / offline]
     API --> ZK[circuits/cli.mjs<br/>issuer + verifier]
     API --> DB[(SQLite / PostgreSQL)]
-    API -->|Orders v2| PP[PayPal Sandbox]
+    API -->|Orders v2, Vault, Refunds, Payouts| PP[PayPal Sandbox]
     UI -->|JS SDK approval| PP
 ```
 
@@ -74,11 +87,14 @@ flowchart LR
 
 | API | Used for | Cost |
 |---|---|---|
-| PayPal REST API, Sandbox: OAuth2 + Orders v2 (create, capture, get) | Checkout after the proof gate | Free |
+| PayPal REST API, Sandbox: OAuth2 + Orders v2 (create, capture, get, Vault) | Checkout after the proof gate, one-click payments with a saved wallet | Free |
+| PayPal Payments v2 (capture refund) | Merchant refunds | Free |
+| PayPal Payouts v1 (create, get) | Payouts released after the recipient's proof | Free |
 | PayPal JavaScript SDK (Sandbox client ID) | Buyer approval popup | Free |
 | Ollama (local) **or** Google Gemini API free tier | KYC assistant, field extraction, explanations, reviewer summary | Free |
 
-Everything else runs locally: Circom and snarkjs (ZK), Tesseract (OCR), SQLite (database).
+Everything else runs locally: Circom and snarkjs (ZK), Tesseract (OCR), MediaPipe Face Landmarker
+(liveness, in the browser; its model is downloaded once from Google's model storage), SQLite (database).
 With `LLM_PROVIDER=none`, the app runs fully offline apart from PayPal.
 
 ## AI tools & models
@@ -106,7 +122,7 @@ PowerShell version where it differs.
 ```bash
 cd circuits
 npm install
-npm test            # 9 proof tests: valid, tampered, wrong payment, replay, expired, rogue issuer...
+npm test            # 14 proof tests: valid, tampered, wrong payment, replay, expired, rogue issuer, age...
 ```
 The proving and verification keys are committed in `circuits/keys/`. To regenerate them,
 run `npm run setup` (macOS/Linux, about 7 minutes). It's a local, demo-only ceremony.
@@ -140,7 +156,9 @@ python -m app.cli seed
 uvicorn app.main:app --reload --port 8000
 ```
 To check it's running, open http://localhost:8000/api/health; it should return `{"ok":true,...}`.
-Run the tests with `python -m pytest -q tests` (32 tests; the PayPal tests mock the provider).
+Run the tests with `python -m pytest -q tests` (52 tests; the PayPal tests mock the provider).
+On startup the backend adds any new columns to an existing database, so `git pull` doesn't
+require a reset. Passports issued for an older circuit are marked revoked; issue a new one.
 
 ### 3. Frontend (in a second terminal)
 ```bash
@@ -172,19 +190,36 @@ After `python -m app.cli seed`, every account uses the password `zkpass-demo-123
 > business and personal Sandbox accounts are Indian, the buyer can't approve the order.
 > Use **Create account** to add a **Personal** account with country **United States**, and pay with that.
 
-This flow was verified end to end with a live Sandbox capture (see the receipt screenshot above).
+Checkout was verified end to end with a live Sandbox capture (see the receipt screenshot above).
+
+**For Vault and Payouts**, PayPal needs a business account in a supported country (India isn't
+supported for Vault):
+
+1. Under **Sandbox Accounts → Create account**, add a **Business** account with country **United States**.
+2. Under **Apps & Credentials → Create App**, create a *Merchant* app linked to that business account, and
+   use its Client ID and Secret in `backend/.env`.
+3. In the app's settings, make sure **Payouts** is enabled and, under **Accept payments → Advanced options**,
+   **Vault** is selected.
+4. For a payout, enter the email of a Sandbox **Personal** account when claiming it.
 
 ## Walkthrough
 1. Sign in as **payer**, open **Verify**, agree, keep the prefilled details, and upload
    `samples/specimen_pan_card.png`. Try `mismatch_name_card.png` to see checks fail.
-2. Complete the simulated liveness step and submit.
+2. Select **Start liveness check**, blink twice and turn your head to each side, then submit.
+   Without a camera, use the simulated step (it's labelled as simulated for the reviewer).
 3. In an incognito window, sign in as **reviewer**, open **Review queue** and approve.
 4. As payer, open **Passport** and select **Issue Passport**.
 5. In another browser or profile, sign in as **merchant**, open **Pay**, select **Create payment request**,
    and copy the link.
 6. As payer, open the link. Use **Try to break it** to watch each bad proof get rejected, then select
-   **Generate proof and unlock**. Pay with the Sandbox personal account, and the receipt shows the
-   real PayPal order and capture IDs.
+   **Generate proof and unlock**. Tick **Save PayPal for one-click payments**, pay with the Sandbox
+   personal account, and the receipt shows the real PayPal order and capture IDs.
+7. Repeat steps 5 and 6 with a new request: after the proof, **Pay with saved PayPal** charges the
+   saved wallet with no popup. Tick **Buyer must be 18 or older** when creating a request to try the
+   private age check.
+8. As **merchant**, open the paid request and select **Refund payment**.
+9. As **merchant**, open **Payouts**, create a payout link and share it. As **payer**, open it, enter a
+   Sandbox personal account's email and select **Prove and receive payout**.
 
 ## Troubleshooting
 
@@ -196,12 +231,14 @@ This flow was verified end to end with a live Sandbox capture (see the receipt s
 | Typing `KEY=value` lines in PowerShell gives "not recognized" errors | Those lines belong inside `backend/.env`; open the file with `notepad .env`. |
 | "PayPal Sandbox isn't configured" on the payment page | Add `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` to `backend/.env` and restart the backend. |
 | The PayPal popup won't let the buyer pay | Pay with a **United States** Sandbox personal account (see the India note above). The app shows PayPal's own error reason if a capture fails. |
+| Payouts fail with "isn't allowed to send Payouts", or one-click payments don't appear | Use an app linked to a **United States** Sandbox business account with Payouts and Vault enabled (see above). |
+| Liveness says "Camera or face tracking isn't available here" | Allow camera access. The face model downloads during `npm run dev`; if that failed, the browser loads it from Google's model storage. Otherwise use the simulated step. |
 | "This browser doesn't hold your Passport's secret" | The holder secret lives in the browser that issued the Passport. Use that browser, or reissue the Passport from the **Passport** page. |
 
 ## Security notes and limits
 - The Groth16 setup is a local, single-contributor ceremony suitable for a demo only.
 - The issuer key lives in `.env`; production would use a KMS or HSM.
-- Liveness is simulated. Production KYC (Aadhaar/PAN, V-CIP) needs authorized integrations and a regulated entity.
+- Liveness runs in the browser and reports its result to the server, so it isn't certified; production would use a certified liveness SDK. Production KYC (Aadhaar/PAN, V-CIP) needs authorized integrations and a regulated entity.
 - PayPal Checkout is a buyer-to-merchant flow. This is not a cross-border payout product, and zero-knowledge proofs don't speed up settlement; they remove repeated identity disclosure.
 
 See [`docs/PRD.md`](docs/PRD.md) for the full specification.
