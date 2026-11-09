@@ -5,7 +5,7 @@
 ZK Pass is a privacy-preserving identity verification and payment authorization
 prototype built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/).
 
-A user completes an AI-assisted KYC demo once and receives an issuer-signed credential
+A user completes an AI-assisted KYC check once and receives an issuer-signed credential
 bound to a secret that only their browser holds. When a payment needs proof that they
 passed KYC, the browser generates a real **Groth16 zero-knowledge proof** instead of
 sharing documents. Only a valid, payment-bound proof unlocks **PayPal Sandbox** checkout,
@@ -13,6 +13,10 @@ and the backend captures and validates the order server-side.
 
 > Independent hackathon prototype, not an official PayPal product.
 > All identity data is mock/test data and all payments run in **PayPal Sandbox**. No real money moves.
+
+**Demo video:** _link coming soon_
+
+![ZK Pass landing page](docs/screenshots/landing.png)
 
 ## What it does
 
@@ -25,6 +29,14 @@ and the backend captures and validates the order server-side.
 The backend rejects proofs that are **altered**, **bound to another payment**, **stale**,
 from an **untrusted issuer**, **revoked**, or **replayed**. Checkout stays locked until a
 proof passes. The payment page has a *Try to break it* panel that demonstrates each case.
+
+| A proof bound to another payment is rejected | A valid proof unlocks a real PayPal Sandbox capture |
+|---|---|
+| ![Rejected proof](docs/screenshots/rejected.png) | ![PayPal Sandbox receipt](docs/screenshots/receipt.png) |
+
+| AI-guided document check | Human review with an AI evidence summary |
+|---|---|
+| ![KYC document step](docs/screenshots/verify.png) | ![Reviewer queue](docs/screenshots/review.png) |
 
 ### The privacy property
 
@@ -56,7 +68,7 @@ flowchart LR
 | `backend/` | FastAPI app: auth, KYC, review, credentials, payment gate, PayPal, tests |
 | `frontend/` | Next.js 16 app with in-browser proving |
 | `samples/` | Fictional SPECIMEN test cards for the KYC demo |
-| `docs/` | Product requirements and hackathon checklist |
+| `docs/` | Product requirements, demo script, hackathon checklist, screenshots |
 
 ## External APIs used
 
@@ -77,42 +89,67 @@ With `LLM_PROVIDER=none`, the app runs fully offline apart from PayPal.
 
 ## Run it locally
 
-### Prerequisites
-- Node.js 20+ and npm
-- Python 3.11+
-- Tesseract OCR: `sudo apt install tesseract-ocr`, `brew install tesseract`, or the Windows installer from the UB Mannheim builds
-- Optional: [Ollama](https://ollama.com) with `ollama pull llama3.2:3b`
-- A free [PayPal Developer](https://developer.paypal.com) account for Sandbox credentials
+Setup takes about 20 minutes. Commands are shown for macOS/Linux, with the Windows
+PowerShell version where it differs.
 
-### 1. ZK circuit tools
+### Prerequisites
+- [Node.js](https://nodejs.org) 20+ and npm
+- [Python](https://www.python.org) 3.11+
+- Tesseract OCR
+  - macOS: `brew install tesseract`
+  - Ubuntu/Debian: `sudo apt install tesseract-ocr`
+  - Windows: the UB Mannheim installer from the [Tesseract docs](https://tesseract-ocr.github.io/tessdoc/Installation.html); keep the default install folder
+- A free [PayPal Developer](https://developer.paypal.com) account (see [PayPal Sandbox setup](#paypal-sandbox-setup))
+- Optional: [Ollama](https://ollama.com) with `ollama pull llama3.2:3b`
+
+### 1. ZK circuit tools (required: the backend uses them)
 ```bash
 cd circuits
 npm install
 npm test            # 9 proof tests: valid, tampered, wrong payment, replay, expired, rogue issuer...
 ```
 The proving and verification keys are committed in `circuits/keys/`. To regenerate them,
-run `npm run setup`; it takes about 7 minutes and is a local, demo-only ceremony.
+run `npm run setup` (macOS/Linux, about 7 minutes). It's a local, demo-only ceremony.
 
 ### 2. Backend
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate               # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-python -m app.cli new-issuer-key        # paste the output into ISSUER_PRIVATE_KEY_HEX in .env
-# add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from developer.paypal.com → Apps & Credentials → Sandbox
-python -m app.cli seed                  # creates payer, merchant and reviewer demo accounts
+cp .env.example .env                    # Windows: copy .env.example .env
+python -m app.cli new-issuer-key        # prints a 64-character key for .env
+```
+
+Open `backend/.env` in a text editor (not the terminal) and fill in:
+
+```
+JWT_SECRET=any-long-random-string
+ISSUER_PRIVATE_KEY_HEX=<the key printed by new-issuer-key>
+PAYPAL_MODE=sandbox
+PAYPAL_CLIENT_ID=<Sandbox client ID>
+PAYPAL_CLIENT_SECRET=<Sandbox secret>
+LLM_PROVIDER=none                       # or ollama / gemini
+# Windows only, if tesseract isn't on PATH:
+TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
+```
+
+Then seed the demo accounts and start the API:
+```bash
+python -m app.cli seed
 uvicorn app.main:app --reload --port 8000
 ```
+To check it's running, open http://localhost:8000/api/health; it should return `{"ok":true,...}`.
 Run the tests with `python -m pytest -q tests` (32 tests; the PayPal tests mock the provider).
 
-### 3. Frontend
+### 3. Frontend (in a second terminal)
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
-npm run dev                             # http://localhost:3000
+cp .env.example .env.local              # Windows: copy .env.example .env.local
+npm run dev
 ```
+Open **http://localhost:3000**.
 
 ### Demo accounts
 After `python -m app.cli seed`, every account uses the password `zkpass-demo-123`:
@@ -123,19 +160,43 @@ After `python -m app.cli seed`, every account uses the password `zkpass-demo-123
 | `merchant@zkpass.dev` | Creates the payment request |
 | `reviewer@zkpass.dev` | Approves or rejects KYC sessions |
 
-For checkout, log in to the PayPal popup with the **Sandbox personal (buyer) account** listed
-under *Sandbox → Accounts* in the PayPal Developer dashboard.
+## PayPal Sandbox setup
+
+1. Sign in at [developer.paypal.com](https://developer.paypal.com) with any PayPal account, then open **Dashboard**.
+2. Make sure the toggle at the top says **Sandbox**. Under **Apps & Credentials**, open the default app
+   (or **Create App** with type *Merchant*) and copy the **Client ID** and **Secret** into `backend/.env`.
+3. Under **Testing Tools → Sandbox Accounts**, find or create a **Personal** account to pay with,
+   and view its email and password with **⋯ → View/Edit account**.
+
+> **Developers in India:** PayPal doesn't support India-to-India payments, so if both the default
+> business and personal Sandbox accounts are Indian, the buyer can't approve the order.
+> Use **Create account** to add a **Personal** account with country **United States**, and pay with that.
+
+This flow was verified end to end with a live Sandbox capture (see the receipt screenshot above).
 
 ## Walkthrough
 1. Sign in as **payer**, open **Verify**, agree, keep the prefilled details, and upload
    `samples/specimen_pan_card.png`. Try `mismatch_name_card.png` to see checks fail.
 2. Complete the simulated liveness step and submit.
-3. In another browser profile, sign in as **reviewer**, open **Review queue** and approve.
+3. In an incognito window, sign in as **reviewer**, open **Review queue** and approve.
 4. As payer, open **Passport** and select **Issue Passport**.
-5. As **merchant**, open **Pay** → **Create payment request** and copy the link.
-6. As payer, open the link. Use **Try to break it** to watch each bad proof get rejected, then
-   **Generate proof and unlock**, pay with the Sandbox buyer account, and see the receipt with the
+5. In another browser or profile, sign in as **merchant**, open **Pay**, select **Create payment request**,
+   and copy the link.
+6. As payer, open the link. Use **Try to break it** to watch each bad proof get rejected, then select
+   **Generate proof and unlock**. Pay with the Sandbox personal account, and the receipt shows the
    real PayPal order and capture IDs.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "Can't reach the API at http://localhost:8000" | The backend isn't running. Start it (step 2) and keep its terminal open. |
+| "OCR engine is not installed on the server" on document upload | Install Tesseract, or set `TESSERACT_CMD` in `backend/.env` to the full path of `tesseract.exe`. |
+| Windows: "running scripts is disabled" on `activate` | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once. |
+| Typing `KEY=value` lines in PowerShell gives "not recognized" errors | Those lines belong inside `backend/.env`; open the file with `notepad .env`. |
+| "PayPal Sandbox isn't configured" on the payment page | Add `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` to `backend/.env` and restart the backend. |
+| The PayPal popup won't let the buyer pay | Pay with a **United States** Sandbox personal account (see the India note above). The app shows PayPal's own error reason if a capture fails. |
+| "This browser doesn't hold your Passport's secret" | The holder secret lives in the browser that issued the Passport. Use that browser, or reissue the Passport from the **Passport** page. |
 
 ## Security notes and limits
 - The Groth16 setup is a local, single-contributor ceremony suitable for a demo only.
