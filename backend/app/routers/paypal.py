@@ -10,7 +10,7 @@ from .. import paypal
 from ..audit import audit
 from ..config import get_settings
 from ..db import get_db
-from ..models import PaymentRequest, Transaction, User, utcnow
+from ..models import PaymentRequest, SavedWallet, Transaction, User, utcnow
 from ..security import current_user
 from .payments import transaction_out
 
@@ -20,6 +20,11 @@ settings = get_settings()
 
 
 class CreateOrderIn(BaseModel):
+    payment_request_id: str
+    save_wallet: bool = False  # vault the buyer's PayPal wallet for one-click payments next time
+
+
+class VaultedPayIn(BaseModel):
     payment_request_id: str
 
 
@@ -68,12 +73,14 @@ def create_order(body: CreateOrderIn, user: User = Depends(current_user), db: Se
     if pr.status != "authorized" or pr.payer_user_id != user.id:
         raise HTTPException(403, "Checkout is locked until a valid proof authorizes this payment")
 
-    existing = db.query(Transaction).filter_by(payment_request_id=pr.id, status="CREATED").first()
+    existing = (db.query(Transaction).filter_by(payment_request_id=pr.id)
+                .filter(Transaction.status.in_(["CREATED", "PAYER_ACTION_REQUIRED"])).first())
     if existing:
         return {"order_id": existing.provider_order_id, "transaction": transaction_out(existing)}
 
     amount = f"{Decimal(pr.amount):.2f}"
-    order = _paypal_call(paypal.create_order, pr.id, amount, pr.currency, pr.description)
+    order = _paypal_call(paypal.create_order, pr.id, amount, pr.currency, pr.description,
+                         body.save_wallet, settings.frontend_origin)
     tx = Transaction(payment_request_id=pr.id, provider_order_id=order["id"], amount=pr.amount,
                      currency=pr.currency, status=order.get("status", "CREATED"), environment=settings.paypal_mode)
     db.add(tx)
@@ -95,8 +102,15 @@ def capture(order_id: str, user: User = Depends(current_user), db: Session = Dep
         return {"transaction": transaction_out(tx)}  # duplicate capture: return the stored result
 
     result = _paypal_call(paypal.capture_order, order_id, db=db, user=user, tx=tx, action="capture")
+    _record_capture(db, user, pr, tx, result)
+    return {"transaction": transaction_out(tx)}
 
-    # Validate the provider response server-side; never trust the frontend callback.
+
+def _record_capture(db: Session, user: User, pr: PaymentRequest, tx: Transaction, result: dict) -> None:
+    """Validate PayPal's capture server-side, mark the payment paid, and keep any vault token.
+
+    The frontend callback alone is never trusted as proof of payment.
+    """
     try:
         unit = result["purchase_units"][0]
         cap = unit["payments"]["captures"][0]
@@ -120,8 +134,18 @@ def capture(order_id: str, user: User = Depends(current_user), db: Session = Dep
     tx.status, tx.provider_capture_id, tx.captured_at = "COMPLETED", cap["id"], utcnow()
     pr.status = "paid"
     audit(db, user.id, "paypal.captured", "transaction", tx.id, provider_capture_id=cap["id"])
+
+    wallet = ((result.get("payment_source") or {}).get("paypal") or {})
+    vault = (wallet.get("attributes") or {}).get("vault") or {}
+    if vault.get("status") == "VAULTED" and vault.get("id"):
+        saved = db.get(SavedWallet, user.id) or SavedWallet(user_id=user.id)
+        saved.vault_id = vault["id"]
+        saved.customer_id = (vault.get("customer") or {}).get("id")
+        saved.payer_email = wallet.get("email_address")
+        saved.environment = settings.paypal_mode
+        db.merge(saved)
+        audit(db, user.id, "paypal.wallet_saved", "user", user.id)
     db.commit()
-    return {"transaction": transaction_out(tx)}
 
 
 @router.get("/orders/{order_id}")
@@ -158,4 +182,54 @@ def refund(transaction_id: str, user: User = Depends(current_user), db: Session 
     pr.status = "refunded"
     audit(db, user.id, "paypal.refunded", "transaction", tx.id, refund_id=result["id"], refund_status=result["status"])
     db.commit()
+    return {"transaction": transaction_out(tx)}
+
+
+@router.get("/wallet")
+def wallet(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    saved = db.get(SavedWallet, user.id)
+    return {"saved": saved is not None, "payer_email": saved.payer_email if saved else None}
+
+
+@router.delete("/wallet")
+def forget_wallet(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    saved = db.get(SavedWallet, user.id)
+    if saved:
+        db.delete(saved)
+        audit(db, user.id, "paypal.wallet_forgotten", "user", user.id)
+        db.commit()
+    return {"saved": False, "payer_email": None}
+
+
+@router.post("/orders/vaulted")
+def pay_with_saved_wallet(body: VaultedPayIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """One-click payment with the saved PayPal wallet. The ZK proof gate still applies."""
+    pr = db.get(PaymentRequest, body.payment_request_id)
+    if pr is None:
+        raise HTTPException(404, "Payment request not found")
+    if pr.status != "authorized" or pr.payer_user_id != user.id:
+        raise HTTPException(403, "Checkout is locked until a valid proof authorizes this payment")
+    saved = db.get(SavedWallet, user.id)
+    if saved is None:
+        raise HTTPException(409, "No saved PayPal wallet. Pay with PayPal once and choose to save it.")
+
+    amount = f"{Decimal(pr.amount):.2f}"
+    tx = Transaction(payment_request_id=pr.id, provider_order_id=f"pending-{pr.id}", amount=pr.amount,
+                     currency=pr.currency, status="CREATED", environment=settings.paypal_mode)
+    db.add(tx)
+    db.flush()
+    try:
+        order = _paypal_call(paypal.create_vaulted_order, pr.id, amount, pr.currency, pr.description, saved.vault_id,
+                             db=db, user=user, tx=tx, action="vaulted_order")
+    except HTTPException:
+        db.delete(tx)
+        db.commit()
+        raise
+    tx.provider_order_id = order["id"]
+    audit(db, user.id, "paypal.vaulted_order_created", "transaction", tx.id, provider_order_id=order["id"])
+    db.flush()
+    # Usually PayPal completes a saved-wallet order straight away; otherwise capture it.
+    result = order if order.get("status") == "COMPLETED" else _paypal_call(
+        paypal.capture_order, order["id"], db=db, user=user, tx=tx, action="capture")
+    _record_capture(db, user, pr, tx, result)
     return {"transaction": transaction_out(tx)}
