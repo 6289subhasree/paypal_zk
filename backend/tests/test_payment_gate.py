@@ -83,3 +83,45 @@ def test_rejections_do_not_leak_witness(client, make_user):
                  str([a.meta for a in db.query(AuditLog)])
     assert payer["secret"] not in dumped
     assert payer["credential"]["proof_material"]["credentialId"] not in dumped
+
+
+def age_request(client, make_user, min_age=18):
+    merchant = make_user()
+    r = client.post("/api/payments/requests", json={"amount": "20.00", "description": "Age-restricted", "min_age": min_age},
+                    headers=merchant["headers"])
+    assert r.status_code == 200, r.text
+    assert r.json()["min_age"] == min_age
+    return r.json()
+
+
+def test_adult_unlocks_18_plus_request(client, make_user):
+    req = age_request(client, make_user)
+    payer = holder_with_credential(client, make_user, dob="1999-08-14")
+    assert authorize(client, payer, req, make_proof(payer, req))["authorized"] is True
+
+
+def test_minor_cannot_prove_18_plus(client, make_user):
+    import pytest
+    from app.zk import ZkError
+    req = age_request(client, make_user)
+    minor = holder_with_credential(client, make_user, dob="2015-01-01")
+    with pytest.raises(ZkError):
+        make_proof(minor, req)  # the circuit refuses to produce the proof at all
+
+
+def test_proof_without_age_check_rejected_on_18_plus_request(client, make_user):
+    req = age_request(client, make_user)
+    payer = holder_with_credential(client, make_user)
+    assert authorize(client, payer, req, make_proof(payer, req, min_age=0))["code"] == "wrong_age_requirement"
+
+
+def test_proof_for_another_date_rejected(client, make_user):
+    _, req = new_request(client, make_user)
+    payer = holder_with_credential(client, make_user)
+    assert authorize(client, payer, req, make_proof(payer, req, today=20200101))["code"] == "wrong_date"
+
+
+def test_credential_carries_birth_date_for_holder_only(client, make_user):
+    payer = holder_with_credential(client, make_user, dob="2001-02-03")
+    assert payer["credential"]["proof_material"]["birthDate"] == 20010203
+    assert payer["credential"]["claims"]["can_prove_age"] is True

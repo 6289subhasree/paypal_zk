@@ -22,10 +22,10 @@ def test_issue_signed_credential(client, make_user):
     assert r.status_code == 200, r.text
     cred = r.json()
     pm = cred["proof_material"]
-    assert cred["claims"] == {"kyc_approved": True}
-    assert zk.verify_signature({k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved", "expiresAt")}, pm["signature"])
+    assert cred["claims"] == {"kyc_approved": True, "can_prove_age": True}
+    assert zk.verify_signature({k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved", "expiresAt", "birthDate")}, pm["signature"])
     # Tampering with any signed field breaks the signature
-    assert not zk.verify_signature({**{k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved")}, "expiresAt": pm["expiresAt"] + 1}, pm["signature"])
+    assert not zk.verify_signature({**{k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved", "birthDate")}, "expiresAt": pm["expiresAt"] + 1}, pm["signature"])
 
 
 def test_reissue_revokes_previous(client, make_user):
@@ -62,6 +62,6 @@ def test_reloaded_proof_material_still_matches_signature(client, make_user):
     reloaded = next(c for c in client.get("/api/credentials/me", headers=u["headers"]).json() if c["id"] == issued["id"])
     pm = reloaded["proof_material"]
     assert pm == issued["proof_material"]
-    assert zk.verify_signature({k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved", "expiresAt")}, pm["signature"])
+    assert zk.verify_signature({k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved", "expiresAt", "birthDate")}, pm["signature"])
     with SessionLocal() as db:
         assert db.get(Credential, issued["id"]).expires_at.tzinfo == timezone.utc
