@@ -14,7 +14,7 @@ from ..security import current_user, require_reviewer
 
 router = APIRouter(prefix="/api/credentials", tags=["credentials"])
 settings = get_settings()
-CIRCUIT_VERSION = "kyc_payment@1"
+CIRCUIT_VERSION = zk.CIRCUIT_VERSION
 
 
 class IssueIn(BaseModel):
@@ -27,7 +27,7 @@ def credential_out(c: Credential, include_witness_fields: bool = False) -> dict:
         "id": c.id,
         "issuer_id": c.issuer_id,
         "credential_type": c.credential_type,
-        "claims": {"kyc_approved": bool(c.kyc_approved)},
+        "claims": {"kyc_approved": bool(c.kyc_approved), "can_prove_age": c.birth_date is not None},
         "issued_at": c.issued_at.isoformat(),
         "expires_at": c.expires_at.isoformat(),
         "status": c.status,
@@ -40,6 +40,7 @@ def credential_out(c: Credential, include_witness_fields: bool = False) -> dict:
             "holderCommitment": c.holder_commitment,
             "kycApproved": c.kyc_approved,
             "expiresAt": int(c.expires_at.timestamp()),
+            "birthDate": c.birth_date,
             "signature": c.signature_reference,
         }
     return out
@@ -58,12 +59,18 @@ def issue(body: IssueIn, user: User = Depends(current_user), db: Session = Depen
     if session is None or session.status != "approved":
         raise HTTPException(403, "A credential can only be issued after an approved KYC session")
 
+    dob = (session.declared or {}).get("date_of_birth")
+    if not dob:
+        raise HTTPException(409, "This KYC session has no date of birth on record")
+    birth_date = int(dob.replace("-", ""))  # YYYY-MM-DD -> YYYYMMDD
+
     expires_at = utcnow() + timedelta(days=settings.credential_ttl_days)
     fields = {
         "credentialId": zk.random_field(),
         "holderCommitment": body.holder_commitment,
         "kycApproved": 1,
         "expiresAt": int(expires_at.timestamp()),
+        "birthDate": birth_date,
     }
     signature = zk.sign_credential(fields)
 
@@ -76,7 +83,7 @@ def issue(body: IssueIn, user: User = Depends(current_user), db: Session = Depen
         credential_reference=fields["credentialId"], holder_commitment=body.holder_commitment,
         kyc_approved=1, expires_at=expires_at, signature_reference=signature,
         revocation_tag=zk.revocation_tag(fields["credentialId"], settings.verifier_id),
-        circuit_version=CIRCUIT_VERSION,
+        circuit_version=CIRCUIT_VERSION, birth_date=birth_date,
     )
     db.add(cred)
     db.flush()

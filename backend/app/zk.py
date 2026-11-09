@@ -6,6 +6,7 @@ from functools import lru_cache
 from .config import get_settings
 
 settings = get_settings()
+CIRCUIT_VERSION = "kyc_payment@2"
 
 
 class ZkError(RuntimeError):

@@ -1,6 +1,6 @@
 """ZK Pay: payment requests and the proof-gated authorization step (FR-08, FR-09)."""
 import time
-from datetime import timedelta
+from datetime import timedelta, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -25,6 +25,8 @@ REJECTIONS = {
     "wrong_verifier": "The proof was generated for a different verifier.",
     "wrong_payment": "The proof is bound to a different payment request.",
     "stale_proof": "The proof's timestamp is too old or in the future. Generate a fresh proof.",
+    "wrong_date": "The proof was made for a different calendar date. Generate a fresh proof.",
+    "wrong_age_requirement": "The proof doesn't cover this request's age requirement.",
     "revoked": "The credential behind this proof has been revoked.",
     "replayed": "This proof has already been used. Each payment needs a fresh proof.",
 }
@@ -34,11 +36,17 @@ class CreateRequestIn(BaseModel):
     amount: Decimal = Field(gt=0, le=10000, decimal_places=2)
     currency: str = Field(default="USD", pattern=r"^[A-Z]{3}$")
     description: str = Field(default="", max_length=200)
+    min_age: int = Field(default=0, ge=0, le=99)  # 18 for age-restricted goods, 0 for none
 
 
 class AuthorizeIn(BaseModel):
     proof: dict
-    public_signals: list[str] = Field(min_length=7, max_length=7)
+    public_signals: list[str] = Field(min_length=9, max_length=9)
+
+
+def today_ymd(offset_days: int = 0) -> int:
+    d = (utcnow() + timedelta(days=offset_days)).astimezone(timezone.utc)
+    return d.year * 10000 + d.month * 100 + d.day
 
 
 def _aware(dt):
@@ -64,6 +72,8 @@ def request_out(pr: PaymentRequest, db: Session) -> dict:
         "challenge": pr.challenge,
         "verifier_id": str(settings.verifier_id),
         "issuer_public_key": zk.issuer_public_key(),
+        "min_age": pr.min_age or 0,
+        "today": today_ymd(),  # YYYYMMDD in UTC, used by the age check
     }
 
 
@@ -71,13 +81,13 @@ def request_out(pr: PaymentRequest, db: Session) -> dict:
 def create_request(body: CreateRequestIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     pr = PaymentRequest(
         recipient_user_id=user.id, amount=body.amount, currency=body.currency,
-        description=body.description, challenge=zk.random_field(),
+        description=body.description, challenge=zk.random_field(), min_age=body.min_age,
         expires_at=utcnow() + timedelta(minutes=settings.payment_request_ttl_minutes),
     )
     db.add(pr)
     db.flush()
     audit(db, user.id, "payment_request.created", "payment_request", pr.id,
-          amount=str(body.amount), currency=body.currency)
+          amount=str(body.amount), currency=body.currency, min_age=body.min_age)
     db.commit()
     return request_out(pr, db)
 
@@ -129,6 +139,11 @@ def authorize(request_id: str, body: AuthorizeIn, user: User = Depends(current_u
     server_now = int(time.time())
     if not (server_now - settings.proof_max_age_seconds <= int(s["now"]) <= server_now + 60):
         return _reject(db, user, pr, body, "stale_proof", s["nullifier"])
+    # The age check uses a calendar date; allow one day either side for time zones.
+    if int(s["today"]) not in {today_ymd(-1), today_ymd(), today_ymd(1)}:
+        return _reject(db, user, pr, body, "wrong_date", s["nullifier"])
+    if s["min_age"] != str(pr.min_age or 0):
+        return _reject(db, user, pr, body, "wrong_age_requirement", s["nullifier"])
 
     # 3. Revocation: compare the verifier-scoped tag against revoked credentials
     if db.query(Credential).filter_by(revocation_tag=s["revocation_tag"], status="revoked").first():
