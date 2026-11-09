@@ -93,3 +93,22 @@ def test_reviewer_cannot_approve_own_session(client, make_user):
     res = run_session(client, reviewer)
     r = client.post(f"/api/review/sessions/{res['id']}/decision", json={"decision": "approved"}, headers=reviewer["headers"])
     assert r.status_code == 403
+
+
+def test_on_device_liveness_is_labelled_not_simulated(client, make_user):
+    u = make_user()
+    h = u["headers"]
+    s = client.post("/api/kyc/sessions", json={"consent": True}, headers=h).json()
+    url = f"/api/kyc/sessions/{s['id']}/liveness"
+    # Must include the blink and both head turns
+    assert client.post(url, json={"method": "on_device", "challenges": ["blink"]}, headers=h).status_code == 400
+    r = client.post(url, json={"method": "on_device", "challenges": ["turn_left", "blink", "turn_right"],
+                               "duration_ms": 9000}, headers=h)
+    assert r.json() == {"method": "on_device", "simulated": False, "completed": True}
+    client.post(f"/api/kyc/sessions/{s['id']}/details", json={"full_name": "Asha Verma", "date_of_birth": "1999-08-14"}, headers=h)
+    with open(SAMPLES / "specimen_pan_card.png", "rb") as f:
+        client.post(f"/api/kyc/sessions/{s['id']}/documents", files={"file": ("c.png", f, "image/png")}, headers=h)
+    res = client.post(f"/api/kyc/sessions/{s['id']}/complete", headers=h).json()
+    live = {c["name"]: c for c in res["checks"]}["liveness"]
+    assert live["passed"] and live["on_device"] and not live["simulated"]
+    assert "Not a certified" in live["detail"]
