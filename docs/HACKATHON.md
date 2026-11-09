@@ -8,7 +8,7 @@ The project must meaningfully use **both PayPal and AI**.
 
 | Requirement | How this project meets it | Status |
 |---|---|---|
-| PayPal developer platform (Sandbox) | Orders API v2 create, server-side capture with idempotency and response validation, JS SDK buyer approval, all gated by a ZK proof | ✅ built, needs a live Sandbox run |
+| PayPal developer platform (Sandbox) | Orders API v2 create, server-side capture with idempotency and response validation, JS SDK buyer approval, all gated by a ZK proof | ✅ built and verified with a live Sandbox capture |
 | AI tool / model | KYC assistant, OCR field extraction, plain-language explanation of failed checks, neutral reviewer evidence summary (Ollama local or Gemini free tier) | ✅ built |
 
 ## Submission requirements
@@ -17,7 +17,7 @@ The project must meaningfully use **both PayPal and AI**.
 - [x] AI tools and models disclosed (README → *AI tools & models*)
 - [x] Add PayPal Sandbox credentials to `backend/.env`
 - [x] Full local run: KYC, review, Passport, all four bad proofs rejected, valid proof accepted, real Sandbox order created
-- [ ] Complete one Sandbox capture with a **United States** Sandbox personal (buyer) account
+- [x] Complete one Sandbox capture with a **United States** Sandbox personal (buyer) account (order 01T5204941594114R, capture 3E074252280547144)
 - [ ] Optional but strong: deploy a hosted demo URL
 - [ ] Record the demo video, **under 3 minutes**, following `docs/DEMO.md`
 - [ ] Upload it to YouTube as **public** and paste the link into Devpost
