@@ -30,6 +30,12 @@ HINTS = {
                         "create a United States personal Sandbox account and pay with that.",
     "PAYEE_ACCOUNT_RESTRICTED": "The Sandbox merchant account is restricted. Create a new Sandbox business account.",
     "INSTRUMENT_DECLINED": "The Sandbox buyer's card was declined. Try again or pick another funding source.",
+    "INSUFFICIENT_FUNDS": "The Sandbox business account doesn't have enough balance for this payout.",
+    "AUTHORIZATION_ERROR": "This Sandbox app isn't allowed to send Payouts. In the PayPal Developer dashboard, "
+                           "create a United States Sandbox business account and an app linked to it.",
+    "NOT_AUTHORIZED": "This Sandbox app isn't allowed to use this PayPal feature. Use an app linked to a "
+                      "United States Sandbox business account.",
+    "RECEIVER_UNREGISTERED": "That email isn't a PayPal Sandbox account. Use a Sandbox personal account's email.",
 }
 
 

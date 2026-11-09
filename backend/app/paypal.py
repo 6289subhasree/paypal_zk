@@ -43,7 +43,8 @@ def _request(method: str, path: str, idempotency_key: str | None = None, json: d
     if r.status_code >= 400:
         body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
         details = body.get("details") or [{}]
-        issue = details[0].get("issue")
+        # Orders/Payments errors put the code in details[].issue; Payouts errors in name.
+        issue = details[0].get("issue") or body.get("name")
         message = body.get("message") or f"PayPal returned {r.status_code}"
         if issue:
             message = f"{message} ({issue}: {details[0].get('description', '').strip()})"
