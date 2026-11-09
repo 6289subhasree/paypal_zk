@@ -83,3 +83,23 @@ def test_create_order_is_idempotent(client, make_user, fake_paypal):
     a = client.post("/api/paypal/orders", json={"payment_request_id": req["id"]}, headers=payer["headers"]).json()
     b = client.post("/api/paypal/orders", json={"payment_request_id": req["id"]}, headers=payer["headers"]).json()
     assert a["order_id"] == b["order_id"] and fake_paypal["create"] == 1
+
+
+def test_capture_error_is_explained_and_audited(client, make_user, monkeypatch):
+    from app import paypal as pp
+    from app.db import SessionLocal
+    from app.models import AuditLog
+
+    monkeypatch.setattr(pp, "create_order", lambda ref, a, c, d: {"id": f"ORDER-ERR-{ref[:6]}", "status": "CREATED"})
+
+    def fail(order_id):
+        raise pp.PayPalError("The requested action could not be performed (PAYER_CANNOT_PAY: payer cannot pay)",
+                             422, "dbg123", "PAYER_CANNOT_PAY")
+    monkeypatch.setattr(pp, "capture_order", fail)
+    _, payer, req = authorized_request(client, make_user)
+    order = client.post("/api/paypal/orders", json={"payment_request_id": req["id"]}, headers=payer["headers"]).json()
+    r = client.post(f"/api/paypal/orders/{order['order_id']}/capture", headers=payer["headers"])
+    assert r.status_code == 502
+    assert "United States personal Sandbox account" in r.json()["detail"]["message"]
+    with SessionLocal() as db:
+        assert db.query(AuditLog).filter_by(action="paypal.capture_failed").count() == 1

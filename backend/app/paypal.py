@@ -10,9 +10,9 @@ _token: dict = {"value": None, "expires": 0.0}
 
 
 class PayPalError(RuntimeError):
-    def __init__(self, message: str, status: int | None = None, debug_id: str | None = None):
+    def __init__(self, message: str, status: int | None = None, debug_id: str | None = None, issue: str | None = None):
         super().__init__(message)
-        self.status, self.debug_id = status, debug_id
+        self.status, self.debug_id, self.issue = status, debug_id, issue
 
 
 def _client() -> httpx.Client:
@@ -42,7 +42,12 @@ def _request(method: str, path: str, idempotency_key: str | None = None, json: d
         r = c.request(method, path, headers=headers, json=json)
     if r.status_code >= 400:
         body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
-        raise PayPalError(body.get("message") or f"PayPal returned {r.status_code}", r.status_code, body.get("debug_id"))
+        details = body.get("details") or [{}]
+        issue = details[0].get("issue")
+        message = body.get("message") or f"PayPal returned {r.status_code}"
+        if issue:
+            message = f"{message} ({issue}: {details[0].get('description', '').strip()})"
+        raise PayPalError(message, r.status_code, body.get("debug_id"), issue)
     return r.json()
 
 

@@ -1,4 +1,5 @@
 """PayPal Sandbox checkout, available only after the ZK payment gate (FR-10)."""
+import logging
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +14,7 @@ from ..models import PaymentRequest, Transaction, User, utcnow
 from ..security import current_user
 
 router = APIRouter(prefix="/api/paypal", tags=["paypal"])
+log = logging.getLogger("zkpass.paypal")
 settings = get_settings()
 
 
@@ -32,11 +34,28 @@ def tx_out(tx: Transaction) -> dict:
     }
 
 
-def _paypal_call(fn, *args):
+# Plain-language hints for the PayPal errors people actually hit in Sandbox.
+HINTS = {
+    "ORDER_NOT_APPROVED": "The buyer hasn't approved this order in the PayPal window yet.",
+    "PAYER_CANNOT_PAY": "This Sandbox buyer can't pay this merchant. If both Sandbox accounts are in India, "
+                        "create a United States personal Sandbox account and pay with that.",
+    "PAYEE_ACCOUNT_RESTRICTED": "The Sandbox merchant account is restricted. Create a new Sandbox business account.",
+    "INSTRUMENT_DECLINED": "The Sandbox buyer's card was declined. Try again or pick another funding source.",
+}
+
+
+def _paypal_call(fn, *args, db: Session | None = None, user: User | None = None, tx: Transaction | None = None,
+                 action: str = "call"):
     try:
         return fn(*args)
     except paypal.PayPalError as e:
-        raise HTTPException(502, {"message": str(e), "debug_id": e.debug_id})
+        log.warning("PayPal %s failed: %s (debug_id=%s)", action, e, e.debug_id)
+        if db is not None and tx is not None:
+            audit(db, user.id if user else None, f"paypal.{action}_failed", "transaction", tx.id,
+                  issue=e.issue, debug_id=e.debug_id)
+            db.commit()
+        hint = HINTS.get(e.issue or "", "")
+        raise HTTPException(502, {"message": f"{e} {hint}".strip(), "issue": e.issue, "debug_id": e.debug_id})
 
 
 @router.get("/config")
@@ -80,7 +99,7 @@ def capture(order_id: str, user: User = Depends(current_user), db: Session = Dep
     if tx.status == "COMPLETED":
         return {"transaction": tx_out(tx)}  # duplicate capture: return the stored result
 
-    result = _paypal_call(paypal.capture_order, order_id)
+    result = _paypal_call(paypal.capture_order, order_id, db=db, user=user, tx=tx, action="capture")
 
     # Validate the provider response server-side; never trust the frontend callback.
     try:
