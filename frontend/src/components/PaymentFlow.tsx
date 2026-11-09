@@ -255,7 +255,9 @@ function Checkout({ req, onCaptured, onError }: { req: PaymentRequest; onCapture
           const r = await api<{ order_id: string }>("/api/paypal/orders", { method: "POST", json: { payment_request_id: req.id } });
           return r.order_id;
         }}
+        onCancel={() => onError("You closed the PayPal window before approving. Select the PayPal button to try again.")}
         onApprove={async (data) => {
+          onError("");
           try {
             // The backend captures and validates; the browser callback alone proves nothing.
             const r = await api<{ transaction: Transaction }>(`/api/paypal/orders/${data.orderID}/capture`, { method: "POST" });
@@ -264,7 +266,13 @@ function Checkout({ req, onCaptured, onError }: { req: PaymentRequest; onCapture
             onError((e as Error).message);
           }
         }}
-        onError={() => onError("PayPal checkout failed. Try again with a Sandbox buyer account.")}
+        onError={(err) => {
+          console.error("PayPal checkout error:", err);
+          onError(
+            `PayPal checkout failed: ${String((err as { message?: string })?.message ?? err).slice(0, 200)}. ` +
+              "Log in with a Sandbox personal (buyer) account. If that account is in India, create a United States one in the PayPal Developer dashboard.",
+          );
+        }}
       />
     </PayPalScriptProvider>
   );
