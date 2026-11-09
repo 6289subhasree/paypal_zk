@@ -67,7 +67,8 @@ export async function provePayment(opts: {
       "/zk/kyc_payment.zkey",
     );
     return { proof, public_signals: publicSignals, provingMs: Math.round(performance.now() - started) };
-  } catch {
+  } catch (err) {
+    console.error("Proof generation failed:", err);
     throw new Error(
       "This credential can't produce a valid proof. It may have expired, or it was issued to a different browser.",
     );
