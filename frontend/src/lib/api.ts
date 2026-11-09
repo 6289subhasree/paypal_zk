@@ -76,6 +76,7 @@ export type ProofMaterial = {
   holderCommitment: string;
   kycApproved: number;
   expiresAt: number;
+  birthDate: number | null;
   signature: { s: string; r8x: string; r8y: string };
 };
 
@@ -83,7 +84,7 @@ export type Credential = {
   id: string;
   issuer_id: string;
   credential_type: string;
-  claims: { kyc_approved: boolean };
+  claims: { kyc_approved: boolean; can_prove_age?: boolean };
   issued_at: string;
   expires_at: string;
   status: "active" | "revoked" | "expired";
@@ -104,6 +105,8 @@ export type PaymentRequest = {
   challenge: string;
   verifier_id: string;
   issuer_public_key: { ax: string; ay: string };
+  min_age: number;
+  today: number;
 };
 
 export type Transaction = {

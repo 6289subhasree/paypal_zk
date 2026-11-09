@@ -31,7 +31,7 @@ export function PassportDoc({
         <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
           <Field label="Holder" value={holderName} private />
           <Field label="Issuer" value={credential?.issuer_id ?? "—"} />
-          <Field label="Claim" value={credential ? "KYC approved" : "—"} />
+          <Field label="Claims" value={credential ? (credential.claims.can_prove_age ? "KYC approved, age" : "KYC approved") : "—"} />
           <Field label="Status" value={status} tone={status === "active" ? "ok" : status === "not issued" ? undefined : "bad"} />
           <Field label="Issued" value={fmt(credential?.issued_at)} />
           <Field label="Expires" value={fmt(credential?.expires_at)} />

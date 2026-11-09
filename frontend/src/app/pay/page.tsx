@@ -26,7 +26,12 @@ function Pay() {
     try {
       const pr = await api<PaymentRequest>("/api/payments/requests", {
         method: "POST",
-        json: { amount: String(f.get("amount")), currency: "USD", description: String(f.get("description") ?? "") },
+        json: {
+          amount: String(f.get("amount")),
+          currency: "USD",
+          description: String(f.get("description") ?? ""),
+          min_age: f.get("adults_only") ? 18 : 0,
+        },
       });
       router.push(`/pay/${pr.id}`);
     } catch (err) {
@@ -60,6 +65,13 @@ function Pay() {
           <label className="block">
             <span className="mb-1 block font-medium">What it&apos;s for</span>
             <input name="description" maxLength={200} defaultValue="Design work, invoice #42" className="field" />
+          </label>
+          <label className="flex items-start gap-3">
+            <input type="checkbox" name="adults_only" className="mt-1.5 h-4 w-4" />
+            <span>
+              <span className="block font-medium">Buyer must be 18 or older</span>
+              <span className="block text-sm text-ink-soft">The payer proves their age without revealing their date of birth.</span>
+            </span>
           </label>
           <button className="btn" disabled={busy}>{busy ? <Spinner label="Creating" /> : "Create payment request"}</button>
         </form>

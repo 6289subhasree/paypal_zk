@@ -121,6 +121,7 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge tone={req.status === "paid" ? "ok" : req.status === "expired" ? "bad" : "neutral"}>{req.status}</Badge>
+          {req.min_age > 0 && <Badge tone="neutral">{req.min_age}+ only</Badge>}
           <Badge tone="sandbox">PayPal Sandbox</Badge>
         </div>
       </header>
@@ -149,6 +150,7 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
                 <div>
                   <h2 className="text-2xl font-bold">Checkout is locked</h2>
                   <p className="mt-1 text-ink-soft">
+                    {req.min_age > 0 && <>This merchant also needs proof that you&apos;re {req.min_age} or older. </>}
                     Prove you hold a valid, approved credential for this payment. The proof is generated here and
                     never includes your name, documents or credential ID.
                   </p>

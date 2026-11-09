@@ -7,7 +7,7 @@ const demoCredential = {
   id: "demo",
   issuer_id: "zkpass-demo-issuer",
   credential_type: "KycApprovedCredential",
-  claims: { kyc_approved: true },
+  claims: { kyc_approved: true, can_prove_age: true },
   issued_at: new Date().toISOString(),
   expires_at: new Date(Date.now() + 30 * 86400_000).toISOString(),
   status: "active" as const,

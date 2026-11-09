@@ -51,10 +51,13 @@ export async function provePayment(opts: {
     now: String(opts.now ?? Math.floor(Date.now() / 1000)),
     payment_challenge: request.challenge,
     verifier_id: request.verifier_id,
+    today: String(request.today),
+    min_age: String(request.min_age ?? 0),
     holder_secret: secret,
     credential_id: material.credentialId,
     kyc_approved: String(material.kycApproved),
     expires_at: String(material.expiresAt),
+    birth_date: String(material.birthDate ?? 0),
     sig_s: material.signature.s,
     sig_r8x: material.signature.r8x,
     sig_r8y: material.signature.r8y,
@@ -69,6 +72,12 @@ export async function provePayment(opts: {
     return { proof, public_signals: publicSignals, provingMs: Math.round(performance.now() - started) };
   } catch (err) {
     console.error("Proof generation failed:", err);
+    if ((request.min_age ?? 0) > 0) {
+      throw new Error(
+        `Your Passport can't prove you're ${request.min_age} or older, so this payment stays locked. ` +
+          "(If you are, your Passport may have expired or belong to another browser.)",
+      );
+    }
     throw new Error(
       "This credential can't produce a valid proof. It may have expired, or it was issued to a different browser.",
     );
@@ -77,7 +86,10 @@ export async function provePayment(opts: {
 
 /** Public signals in circuit order, labelled for display. */
 export function labelSignals(ps: string[]) {
-  const names = ["nullifier", "revocation_tag", "issuer_ax", "issuer_ay", "now", "payment_challenge", "verifier_id"];
+  const names = [
+    "nullifier", "revocation_tag", "issuer_ax", "issuer_ay", "now",
+    "payment_challenge", "verifier_id", "today", "min_age",
+  ];
   return names.map((name, i) => ({ name, value: ps[i] }));
 }
 
