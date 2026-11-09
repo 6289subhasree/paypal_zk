@@ -50,7 +50,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <nav aria-label="Steps" className="lg:sticky lg:top-6 lg:self-start">
           <ol className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-1">
             {STEPS.map((s, i) => {
-              const active = path.startsWith(s.href);
+              const active = path === s.href || path.startsWith(`${s.href}/`);
               return (
                 <li key={s.href} className="shrink-0">
                   <Link
