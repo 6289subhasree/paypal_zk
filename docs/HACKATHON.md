@@ -15,12 +15,14 @@ The project must meaningfully use **both PayPal and AI**.
 - [x] Functional demo with full setup and run instructions in README (mockups don't count)
 - [x] Public repo with an open-source license (MIT, see `LICENSE`)
 - [x] AI tools and models disclosed (README → *AI tools & models*)
-- [ ] Add PayPal Sandbox credentials to `backend/.env` and do one real capture
+- [x] Add PayPal Sandbox credentials to `backend/.env`
+- [x] Full local run: KYC, review, Passport, all four bad proofs rejected, valid proof accepted, real Sandbox order created
+- [ ] Complete one Sandbox capture with a **United States** Sandbox personal (buyer) account
 - [ ] Optional but strong: deploy a hosted demo URL
 - [ ] Record the demo video, **under 3 minutes**, following `docs/DEMO.md`
 - [ ] Upload it to YouTube as **public** and paste the link into Devpost
 - [ ] Video uses no third-party trademarks, copyrighted music or protected material without permission
-- [ ] Write the Devpost project description in English
+- [x] Write the Devpost project description in English (draft in `docs/DEVPOST.md`)
 - [ ] Fill in every Devpost field and recheck the official rules for amendments before submitting
 
 ## Branding note

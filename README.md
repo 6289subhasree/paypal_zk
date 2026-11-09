@@ -104,7 +104,7 @@ python -m app.cli new-issuer-key        # paste the output into ISSUER_PRIVATE_K
 python -m app.cli seed                  # creates payer, merchant and reviewer demo accounts
 uvicorn app.main:app --reload --port 8000
 ```
-Run the tests with `python -m pytest -q tests` (29 tests; the PayPal tests mock the provider).
+Run the tests with `python -m pytest -q tests` (30 tests; the PayPal tests mock the provider).
 
 ### 3. Frontend
 ```bash
