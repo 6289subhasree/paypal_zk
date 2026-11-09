@@ -43,3 +43,4 @@ public/zk/
 
 # keep the example env file
 !.env.example
+public/mediapipe/
