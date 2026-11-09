@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { Badge, ErrorNote, PageTitle, Spinner } from "@/components/ui";
 import { ChecksList } from "@/components/ChecksList";
+import { LivenessCheck } from "@/components/LivenessCheck";
 import { api, type KycSession } from "@/lib/api";
 
 type Step = "welcome" | "details" | "document" | "liveness" | "submit";
@@ -106,8 +107,8 @@ function Verify() {
               })} onNext={() => goto("liveness")} />
             )}
             {step === "liveness" && session && (
-              <Liveness busy={busy} onDone={() => run("Submitting", async () => {
-                await api(`/api/kyc/sessions/${session.id}/liveness`, { method: "POST" });
+              <LivenessCheck busy={busy} onDone={(result) => run("Submitting", async () => {
+                await api(`/api/kyc/sessions/${session.id}/liveness`, { method: "POST", json: result });
                 setSession(await api<KycSession>(`/api/kyc/sessions/${session.id}/complete`, { method: "POST" }));
                 setStep("submit");
               })} />
@@ -130,7 +131,7 @@ function Consent({ busy, onStart }: { busy: string; onStart: () => void }) {
       <ul className="list-disc space-y-1 pl-5 text-ink-soft">
         <li>Use one of the SPECIMEN test cards from the repo&apos;s <code>samples/</code> folder, never a real ID.</li>
         <li>The image is read in memory and discarded. Only masked fields and check results are kept.</li>
-        <li>Liveness is simulated in this demo. No face or voice analysis happens.</li>
+        <li>A short liveness check runs in your browser with your camera. Nothing is recorded or uploaded, and it isn&apos;t a certified check.</li>
         <li>An AI assistant helps you, but a human reviewer approves or rejects the session.</li>
       </ul>
       <label className="flex items-start gap-3">
@@ -198,55 +199,6 @@ function DocumentStep({ session, busy, onUpload, onNext }: { session: KycSession
         </dl>
       )}
       <button className="btn" disabled={!read || !!busy} onClick={onNext}>Continue to liveness</button>
-    </div>
-  );
-}
-
-function Liveness({ busy, onDone }: { busy: string; onDone: () => void }) {
-  const video = useRef<HTMLVideoElement>(null);
-  const [camera, setCamera] = useState<"off" | "on" | "denied">("off");
-
-  useEffect(() => {
-    const v = video.current;
-    return () => {
-      (v?.srcObject as MediaStream | null)?.getTracks().forEach((t) => t.stop());
-    };
-  }, []);
-
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      if (video.current) video.current.srcObject = stream;
-      setCamera("on");
-    } catch {
-      setCamera("denied");
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <h2 className="text-2xl font-bold">Liveness</h2>
-        <Badge tone="sim">Simulated</Badge>
-      </div>
-      <p className="text-ink-soft">
-        A real deployment would use a certified liveness SDK. Here the camera preview stays on your device: nothing is
-        recorded, uploaded or analysed.
-      </p>
-      <div className="relative aspect-video overflow-hidden rounded-2xl bg-ink">
-        <video ref={video} autoPlay playsInline muted className="h-full w-full object-cover" />
-        {camera !== "on" && (
-          <div className="absolute inset-0 grid place-items-center p-4 text-center text-paper">
-            {camera === "denied" ? "Camera unavailable. You can still complete the simulated step." : "Camera preview is off."}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {camera !== "on" && <button className="btn btn-quiet" onClick={startCamera}>Turn on camera preview</button>}
-        <button className="btn" disabled={!!busy} onClick={onDone}>
-          {busy ? <Spinner label={busy} /> : "Complete simulated liveness and submit"}
-        </button>
-      </div>
     </div>
   );
 }
