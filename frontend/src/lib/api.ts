@@ -99,7 +99,7 @@ export type PaymentRequest = {
   description: string;
   recipient: { id: string; display_name: string };
   payer_user_id: string | null;
-  status: "open" | "authorized" | "paid" | "expired" | "cancelled";
+  status: "open" | "authorized" | "paid" | "refunded" | "expired" | "cancelled";
   expires_at: string;
   created_at: string;
   challenge: string;
@@ -107,6 +107,7 @@ export type PaymentRequest = {
   issuer_public_key: { ax: string; ay: string };
   min_age: number;
   today: number;
+  transaction?: Transaction | null;
 };
 
 export type Transaction = {
@@ -121,4 +122,7 @@ export type Transaction = {
   environment: string;
   created_at: string;
   captured_at: string | null;
+  refund_id?: string | null;
+  refund_status?: string | null;
+  refunded_at?: string | null;
 };

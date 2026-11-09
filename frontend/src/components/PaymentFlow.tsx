@@ -45,15 +45,8 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
     api<Credential[]>("/api/credentials/me").then((cs) => setCred(cs.find((c) => c.status === "active") ?? null)).catch(() => {});
   }, [requestId]);
 
-  useEffect(() => {
-    if (!req || !user) return;
-    api<(PaymentRequest & { transaction: Transaction | null })[]>("/api/payments/history")
-      .then((h) => {
-        const t = h.find((x) => x.id === req.id)?.transaction;
-        if (t?.status === "COMPLETED") setTx(t as Transaction);
-      })
-      .catch(() => {});
-  }, [req, user]);
+  const savedTx = req?.transaction?.status === "COMPLETED" ? req.transaction : null;
+  const shownTx = tx ?? savedTx;
 
   if (error && !req) return <ErrorNote>{error}</ErrorNote>;
   if (!req || !user) return <Spinner label="Loading payment request" />;
@@ -127,9 +120,9 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
       </header>
 
       {isRecipient ? (
-        <RecipientView req={req} onRefresh={load} />
-      ) : tx ? (
-        <Receipt tx={tx} />
+        <RecipientView req={req} onRefresh={load} onRefunded={(t) => setReq({ ...req, status: "refunded", transaction: t })} />
+      ) : shownTx ? (
+        <Receipt tx={shownTx} />
       ) : (
         <div className="grid items-start gap-10 xl:grid-cols-[1.1fr_1fr]">
           <PassportDoc
@@ -225,9 +218,26 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
   );
 }
 
-function RecipientView({ req, onRefresh }: { req: PaymentRequest; onRefresh: () => void }) {
+function RecipientView({
+  req,
+  onRefresh,
+  onRefunded,
+}: {
+  req: PaymentRequest;
+  onRefresh: () => void;
+  onRefunded: (t: Transaction) => void;
+}) {
   const [copied, setCopied] = useState(false);
   const link = typeof window !== "undefined" ? `${window.location.origin}/pay/${req.id}` : "";
+  const tx = req.transaction;
+  if (tx?.status === "COMPLETED") {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <Receipt tx={tx} />
+        {!tx.refund_id && <RefundButton tx={tx} onRefunded={onRefunded} />}
+      </div>
+    );
+  }
   return (
     <section className="panel max-w-2xl space-y-4 p-6">
       <h2 className="text-2xl font-bold">Share this request</h2>
@@ -287,11 +297,49 @@ function Checkout({ req, onCaptured, onError }: { req: PaymentRequest; onCapture
   );
 }
 
+function RefundButton({ tx, onRefunded }: { tx: Transaction; onRefunded: (t: Transaction) => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function refund() {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await api<{ transaction: Transaction }>(`/api/paypal/transactions/${tx.id}/refund`, { method: "POST" });
+      onRefunded(r.transaction);
+    } catch (e) {
+      setError((e as Error).message);
+      setConfirming(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <ErrorNote>{error}</ErrorNote>
+      {confirming ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <span>Refund the full {tx.currency} {tx.amount} to the buyer through PayPal Sandbox?</span>
+          <button className="btn" onClick={refund} disabled={busy}>
+            {busy ? <Spinner label="Refunding" /> : "Confirm refund"}
+          </button>
+          <button className="btn btn-quiet" onClick={() => setConfirming(false)} disabled={busy}>Keep payment</button>
+        </div>
+      ) : (
+        <button className="btn btn-quiet" onClick={() => setConfirming(true)}>Refund payment</button>
+      )}
+    </div>
+  );
+}
+
 function Receipt({ tx }: { tx: Transaction }) {
+  const refunded = !!tx.refund_id;
   return (
     <section className="panel max-w-2xl overflow-hidden">
-      <div className="flex items-center justify-between gap-3 bg-approve-soft px-6 py-4">
-        <h2 className="text-2xl font-bold text-approve">Payment captured</h2>
+      <div className={`flex items-center justify-between gap-3 px-6 py-4 ${refunded ? "bg-paper-deep" : "bg-approve-soft"}`}>
+        <h2 className={`text-2xl font-bold ${refunded ? "" : "text-approve"}`}>{refunded ? "Payment refunded" : "Payment captured"}</h2>
         <Badge tone="sandbox">Sandbox test transaction</Badge>
       </div>
       <dl className="grid gap-3 px-6 py-5 sm:grid-cols-2">
@@ -302,6 +350,12 @@ function Receipt({ tx }: { tx: Transaction }) {
           ["PayPal capture ID", tx.provider_capture_id ?? "—"],
           ["Captured", tx.captured_at ? new Date(tx.captured_at).toLocaleString() : "—"],
           ["Environment", tx.environment],
+          ...(refunded
+            ? [
+                ["PayPal refund ID", tx.refund_id ?? "—"],
+                ["Refund status", tx.refund_status ?? "—"],
+              ]
+            : []),
         ].map(([k, v]) => (
           <div key={k}>
             <dt className="text-sm text-ink-soft">{k}</dt>
