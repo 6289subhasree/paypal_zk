@@ -68,3 +68,10 @@ def capture_order(order_id: str) -> dict:
 
 def get_order(order_id: str) -> dict:
     return _request("GET", f"/v2/checkout/orders/{order_id}")
+
+
+def refund_capture(capture_id: str, note: str = "") -> dict:
+    """Full refund of a captured payment (Payments API v2)."""
+    return _request("POST", f"/v2/payments/captures/{capture_id}/refund",
+                    idempotency_key=f"refund-{capture_id}",
+                    json={"note_to_payer": (note or "Refund from ZK Pass demo merchant")[:255]})

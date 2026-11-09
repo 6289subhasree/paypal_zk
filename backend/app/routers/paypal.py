@@ -12,6 +12,7 @@ from ..config import get_settings
 from ..db import get_db
 from ..models import PaymentRequest, Transaction, User, utcnow
 from ..security import current_user
+from .payments import transaction_out
 
 router = APIRouter(prefix="/api/paypal", tags=["paypal"])
 log = logging.getLogger("zkpass.paypal")
@@ -20,18 +21,6 @@ settings = get_settings()
 
 class CreateOrderIn(BaseModel):
     payment_request_id: str
-
-
-def tx_out(tx: Transaction) -> dict:
-    return {
-        "id": tx.id, "payment_request_id": tx.payment_request_id,
-        "provider": tx.provider, "provider_order_id": tx.provider_order_id,
-        "provider_capture_id": tx.provider_capture_id,
-        "amount": f"{Decimal(tx.amount):.2f}", "currency": tx.currency,
-        "status": tx.status, "environment": tx.environment,
-        "created_at": tx.created_at.isoformat(),
-        "captured_at": tx.captured_at.isoformat() if tx.captured_at else None,
-    }
 
 
 # Plain-language hints for the PayPal errors people actually hit in Sandbox.
@@ -75,7 +64,7 @@ def create_order(body: CreateOrderIn, user: User = Depends(current_user), db: Se
 
     existing = db.query(Transaction).filter_by(payment_request_id=pr.id, status="CREATED").first()
     if existing:
-        return {"order_id": existing.provider_order_id, "transaction": tx_out(existing)}
+        return {"order_id": existing.provider_order_id, "transaction": transaction_out(existing)}
 
     amount = f"{Decimal(pr.amount):.2f}"
     order = _paypal_call(paypal.create_order, pr.id, amount, pr.currency, pr.description)
@@ -85,7 +74,7 @@ def create_order(body: CreateOrderIn, user: User = Depends(current_user), db: Se
     db.flush()
     audit(db, user.id, "paypal.order_created", "transaction", tx.id, provider_order_id=order["id"])
     db.commit()
-    return {"order_id": order["id"], "transaction": tx_out(tx)}
+    return {"order_id": order["id"], "transaction": transaction_out(tx)}
 
 
 @router.post("/orders/{order_id}/capture")
@@ -97,7 +86,7 @@ def capture(order_id: str, user: User = Depends(current_user), db: Session = Dep
     if pr.payer_user_id != user.id:
         raise HTTPException(403, "Not your order")
     if tx.status == "COMPLETED":
-        return {"transaction": tx_out(tx)}  # duplicate capture: return the stored result
+        return {"transaction": transaction_out(tx)}  # duplicate capture: return the stored result
 
     result = _paypal_call(paypal.capture_order, order_id, db=db, user=user, tx=tx, action="capture")
 
@@ -126,7 +115,7 @@ def capture(order_id: str, user: User = Depends(current_user), db: Session = Dep
     pr.status = "paid"
     audit(db, user.id, "paypal.captured", "transaction", tx.id, provider_capture_id=cap["id"])
     db.commit()
-    return {"transaction": tx_out(tx)}
+    return {"transaction": transaction_out(tx)}
 
 
 @router.get("/orders/{order_id}")
@@ -137,4 +126,30 @@ def order_status(order_id: str, user: User = Depends(current_user), db: Session 
     pr = db.get(PaymentRequest, tx.payment_request_id)
     if user.id not in (pr.payer_user_id, pr.recipient_user_id):
         raise HTTPException(403, "Not your order")
-    return {"transaction": tx_out(tx), "provider": _paypal_call(paypal.get_order, order_id)}
+    return {"transaction": transaction_out(tx), "provider": _paypal_call(paypal.get_order, order_id)}
+
+
+@router.post("/transactions/{transaction_id}/refund")
+def refund(transaction_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Full refund of a captured Sandbox payment. Only the merchant who was paid can refund."""
+    tx = db.get(Transaction, transaction_id)
+    if tx is None:
+        raise HTTPException(404, "Transaction not found")
+    pr = db.get(PaymentRequest, tx.payment_request_id)
+    if pr.recipient_user_id != user.id:
+        raise HTTPException(403, "Only the merchant who received this payment can refund it")
+    if tx.refund_id:
+        return {"transaction": transaction_out(tx)}  # already refunded: idempotent
+    if tx.status != "COMPLETED" or not tx.provider_capture_id:
+        raise HTTPException(409, "Only a completed, captured payment can be refunded")
+
+    result = _paypal_call(paypal.refund_capture, tx.provider_capture_id, f"Refund for {pr.description}"[:255],
+                          db=db, user=user, tx=tx, action="refund")
+    if result.get("status") not in ("COMPLETED", "PENDING") or not result.get("id"):
+        raise HTTPException(502, {"message": "PayPal did not confirm the refund", "provider_status": result.get("status")})
+
+    tx.refund_id, tx.refund_status, tx.refunded_at = result["id"], result["status"], utcnow()
+    pr.status = "refunded"
+    audit(db, user.id, "paypal.refunded", "transaction", tx.id, refund_id=result["id"], refund_status=result["status"])
+    db.commit()
+    return {"transaction": transaction_out(tx)}

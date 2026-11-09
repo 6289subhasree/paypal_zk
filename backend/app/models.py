@@ -140,6 +140,9 @@ class Transaction(Base):
     environment: Mapped[str] = mapped_column(String(10))  # sandbox | live
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
     captured_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+    refund_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    refund_status: Mapped[str | None] = mapped_column(String(30), nullable=True)  # COMPLETED | PENDING
+    refunded_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
 class AuditLog(Base):

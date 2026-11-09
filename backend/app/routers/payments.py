@@ -49,6 +49,18 @@ def today_ymd(offset_days: int = 0) -> int:
     return d.year * 10000 + d.month * 100 + d.day
 
 
+def transaction_out(tx: Transaction) -> dict:
+    iso = lambda d: _aware(d).isoformat() if d else None  # noqa: E731
+    return {
+        "id": tx.id, "payment_request_id": tx.payment_request_id, "provider": tx.provider,
+        "provider_order_id": tx.provider_order_id, "provider_capture_id": tx.provider_capture_id,
+        "amount": f"{Decimal(tx.amount):.2f}", "currency": tx.currency,
+        "status": tx.status, "environment": tx.environment,
+        "created_at": iso(tx.created_at), "captured_at": iso(tx.captured_at),
+        "refund_id": tx.refund_id, "refund_status": tx.refund_status, "refunded_at": iso(tx.refunded_at),
+    }
+
+
 def _aware(dt):
     return dt if dt.tzinfo else dt.replace(tzinfo=utcnow().tzinfo)
 
@@ -97,7 +109,12 @@ def get_request(request_id: str, user: User = Depends(current_user), db: Session
     pr = db.get(PaymentRequest, request_id)
     if pr is None:
         raise HTTPException(404, "Payment request not found")
-    return request_out(pr, db)
+    out = request_out(pr, db)
+    if user.id in (pr.recipient_user_id, pr.payer_user_id):
+        tx = (db.query(Transaction).filter_by(payment_request_id=pr.id)
+              .order_by(Transaction.created_at.desc()).first())
+        out["transaction"] = transaction_out(tx) if tx else None
+    return out
 
 
 def _reject(db: Session, user: User, pr: PaymentRequest, body: AuthorizeIn, code: str, nullifier=None):
@@ -185,10 +202,6 @@ def history(user: User = Depends(current_user), db: Session = Depends(get_db)):
         tx = db.query(Transaction).filter_by(payment_request_id=pr.id).order_by(Transaction.created_at.desc()).first()
         item = request_out(pr, db)
         item["role"] = "recipient" if pr.recipient_user_id == user.id else "payer"
-        item["transaction"] = None if tx is None else {
-            "provider_order_id": tx.provider_order_id, "provider_capture_id": tx.provider_capture_id,
-            "status": tx.status, "environment": tx.environment,
-            "captured_at": _aware(tx.captured_at).isoformat() if tx.captured_at else None,
-        }
+        item["transaction"] = transaction_out(tx) if tx else None
         out.append(item)
     return out

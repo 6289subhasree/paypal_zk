@@ -103,3 +103,38 @@ def test_capture_error_is_explained_and_audited(client, make_user, monkeypatch):
     assert "United States personal Sandbox account" in r.json()["detail"]["message"]
     with SessionLocal() as db:
         assert db.query(AuditLog).filter_by(action="paypal.capture_failed").count() == 1
+
+
+def paid_request(client, make_user, fake_paypal):
+    merchant, payer, req = authorized_request(client, make_user)
+    order = client.post("/api/paypal/orders", json={"payment_request_id": req["id"]}, headers=payer["headers"]).json()
+    fake_paypal["capture_response"] = completed(req["id"])
+    tx = client.post(f"/api/paypal/orders/{order['order_id']}/capture", headers=payer["headers"]).json()["transaction"]
+    return merchant, payer, req, tx
+
+
+def test_merchant_refunds_captured_payment(client, make_user, fake_paypal, monkeypatch):
+    from app import paypal as pp
+    calls = []
+    monkeypatch.setattr(pp, "refund_capture", lambda cap, note: calls.append(cap) or {"id": "REF-1", "status": "COMPLETED"})
+    merchant, payer, req, tx = paid_request(client, make_user, fake_paypal)
+
+    # The payer can't refund themselves
+    assert client.post(f"/api/paypal/transactions/{tx['id']}/refund", headers=payer["headers"]).status_code == 403
+
+    r = client.post(f"/api/paypal/transactions/{tx['id']}/refund", headers=merchant["headers"])
+    assert r.status_code == 200, r.text
+    assert r.json()["transaction"]["refund_id"] == "REF-1"
+    assert calls == ["CAP-123"]
+    # Refunding again doesn't call PayPal twice
+    client.post(f"/api/paypal/transactions/{tx['id']}/refund", headers=merchant["headers"])
+    assert calls == ["CAP-123"]
+    seen = client.get(f"/api/payments/requests/{req['id']}", headers=payer["headers"]).json()
+    assert seen["status"] == "refunded" and seen["transaction"]["refund_status"] == "COMPLETED"
+
+
+def test_cannot_refund_uncaptured_payment(client, make_user, fake_paypal):
+    merchant, payer, req = authorized_request(client, make_user)
+    client.post("/api/paypal/orders", json={"payment_request_id": req["id"]}, headers=payer["headers"])
+    tx = client.get(f"/api/payments/requests/{req['id']}", headers=merchant["headers"]).json()["transaction"]
+    assert client.post(f"/api/paypal/transactions/{tx['id']}/refund", headers=merchant["headers"]).status_code == 409
