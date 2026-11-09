@@ -70,6 +70,28 @@ def get_order(order_id: str) -> dict:
     return _request("GET", f"/v2/checkout/orders/{order_id}")
 
 
+def create_payout(payout_id: str, receiver_email: str, amount: str, currency: str, note: str) -> dict:
+    """Send money to one PayPal account (Payouts API). The batch id makes retries safe."""
+    return _request("POST", "/v1/payments/payouts", idempotency_key=f"payout-{payout_id}", json={
+        "sender_batch_header": {
+            "sender_batch_id": payout_id,
+            "email_subject": "You have a payout from the ZK Pass demo",
+            "email_message": "Released after you proved your KYC status with a zero-knowledge proof.",
+        },
+        "items": [{
+            "recipient_type": "EMAIL",
+            "receiver": receiver_email,
+            "amount": {"value": amount, "currency": currency},
+            "note": (note or "ZK Pass payout")[:4000],
+            "sender_item_id": payout_id,
+        }],
+    })
+
+
+def get_payout(batch_id: str) -> dict:
+    return _request("GET", f"/v1/payments/payouts/{batch_id}")
+
+
 def refund_capture(capture_id: str, note: str = "") -> dict:
     """Full refund of a captured payment (Payments API v2)."""
     return _request("POST", f"/v2/payments/captures/{capture_id}/refund",

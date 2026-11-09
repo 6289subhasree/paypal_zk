@@ -145,6 +145,29 @@ class Transaction(Base):
     refunded_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
+class Payout(Base):
+    """A payment to a person through PayPal Payouts, released only after they prove KYC."""
+    __tablename__ = "payouts"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    sender_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    recipient_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    amount: Mapped[str] = mapped_column(Numeric(12, 2))
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    note: Mapped[str] = mapped_column(String(200), default="")
+    challenge: Mapped[str] = mapped_column(String(100))  # bound into the recipient's proof
+    min_age: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
+    # awaiting_proof | sending | sent | failed | expired
+    status: Mapped[str] = mapped_column(String(20), default="awaiting_proof")
+    receiver_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    nullifier: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+    provider_batch_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider_item_status: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    environment: Mapped[str] = mapped_column(String(10), default="sandbox")
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
