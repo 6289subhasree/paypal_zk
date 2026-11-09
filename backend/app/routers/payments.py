@@ -1,6 +1,5 @@
 """ZK Pay: payment requests and the proof-gated authorization step (FR-08, FR-09)."""
-import time
-from datetime import timedelta, timezone
+from datetime import timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,24 +11,13 @@ from .. import zk
 from ..audit import audit
 from ..config import get_settings
 from ..db import get_db
-from ..models import Credential, PaymentRequest, Proof, Transaction, UsedNullifier, User, utcnow
+from ..models import PaymentRequest, Proof, Transaction, UsedNullifier, User, utcnow
+from ..proof_gate import REJECTIONS, check_proof, credential_for, today_ymd
 from ..security import current_user
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 settings = get_settings()
 
-# Human-readable reasons, shown in the UI without exposing witness values.
-REJECTIONS = {
-    "invalid_proof": "The proof failed cryptographic verification (it was altered or malformed).",
-    "untrusted_issuer": "The credential behind this proof was not signed by a trusted issuer.",
-    "wrong_verifier": "The proof was generated for a different verifier.",
-    "wrong_payment": "The proof is bound to a different payment request.",
-    "stale_proof": "The proof's timestamp is too old or in the future. Generate a fresh proof.",
-    "wrong_date": "The proof was made for a different calendar date. Generate a fresh proof.",
-    "wrong_age_requirement": "The proof doesn't cover this request's age requirement.",
-    "revoked": "The credential behind this proof has been revoked.",
-    "replayed": "This proof has already been used. Each payment needs a fresh proof.",
-}
 
 
 class CreateRequestIn(BaseModel):
@@ -42,11 +30,6 @@ class CreateRequestIn(BaseModel):
 class AuthorizeIn(BaseModel):
     proof: dict
     public_signals: list[str] = Field(min_length=9, max_length=9)
-
-
-def today_ymd(offset_days: int = 0) -> int:
-    d = (utcnow() + timedelta(days=offset_days)).astimezone(timezone.utc)
-    return d.year * 10000 + d.month * 100 + d.day
 
 
 def transaction_out(tx: Transaction) -> dict:
@@ -138,33 +121,9 @@ def authorize(request_id: str, body: AuthorizeIn, user: User = Depends(current_u
     if pr.status in ("expired", "cancelled") or (pr.status == "open" and _aware(pr.expires_at) <= utcnow()):
         raise HTTPException(409, "This payment request is no longer open")
 
-    # 1. Cryptographic verification against the circuit's verification key
-    result = zk.verify_proof(body.proof, body.public_signals)
-    if not result["valid"]:
-        return _reject(db, user, pr, body, "invalid_proof")
-    s = result["signals"]
-
-    # 2. Public inputs must match what this verifier expects
-    issuer = zk.issuer_public_key()
-    if (s["issuer_ax"], s["issuer_ay"]) != (issuer["ax"], issuer["ay"]):
-        return _reject(db, user, pr, body, "untrusted_issuer", s["nullifier"])
-    if s["verifier_id"] != str(settings.verifier_id):
-        return _reject(db, user, pr, body, "wrong_verifier", s["nullifier"])
-    if s["payment_challenge"] != pr.challenge:
-        return _reject(db, user, pr, body, "wrong_payment", s["nullifier"])
-    # The circuit proves expires_at > now; this check makes sure `now` really is now.
-    server_now = int(time.time())
-    if not (server_now - settings.proof_max_age_seconds <= int(s["now"]) <= server_now + 60):
-        return _reject(db, user, pr, body, "stale_proof", s["nullifier"])
-    # The age check uses a calendar date; allow one day either side for time zones.
-    if int(s["today"]) not in {today_ymd(-1), today_ymd(), today_ymd(1)}:
-        return _reject(db, user, pr, body, "wrong_date", s["nullifier"])
-    if s["min_age"] != str(pr.min_age or 0):
-        return _reject(db, user, pr, body, "wrong_age_requirement", s["nullifier"])
-
-    # 3. Revocation: compare the verifier-scoped tag against revoked credentials
-    if db.query(Credential).filter_by(revocation_tag=s["revocation_tag"], status="revoked").first():
-        return _reject(db, user, pr, body, "revoked", s["nullifier"])
+    s, code = check_proof(db, body.proof, body.public_signals, pr.challenge, pr.min_age or 0)
+    if code:
+        return _reject(db, user, pr, body, code, s["nullifier"] if s else None)
 
     # 4. Replay protection: the nullifier may authorize exactly one payment
     if db.get(UsedNullifier, s["nullifier"]):
@@ -179,7 +138,7 @@ def authorize(request_id: str, body: AuthorizeIn, user: User = Depends(current_u
         db.rollback()
         raise HTTPException(409, "This payment request is no longer open")
 
-    cred = db.query(Credential).filter_by(revocation_tag=s["revocation_tag"]).first()
+    cred = credential_for(db, s)
     proof = Proof(user_id=user.id, credential_id=cred.id if cred else None, payment_request_id=pr.id,
                   proof_reference=body.proof, public_inputs=body.public_signals,
                   nullifier=s["nullifier"], verification_status="accepted")
