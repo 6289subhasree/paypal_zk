@@ -27,7 +27,7 @@ def health():
     return {"ok": True, "paypal_mode": settings.paypal_mode}
 
 
-from .routers import auth, credentials, kyc, payments, paypal  # noqa: E402
+from .routers import auth, credentials, kyc, payments, payouts, paypal  # noqa: E402
 
-for r in (auth, credentials, kyc, payments, paypal):
+for r in (auth, credentials, kyc, payments, payouts, paypal):
     app.include_router(r.router)
