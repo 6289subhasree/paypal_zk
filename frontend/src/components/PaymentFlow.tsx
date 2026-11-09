@@ -259,41 +259,95 @@ function RecipientView({
 
 function Checkout({ req, onCaptured, onError }: { req: PaymentRequest; onCaptured: (t: Transaction) => void; onError: (m: string) => void }) {
   const [clientId, setClientId] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<{ saved: boolean; payer_email: string | null } | null>(null);
+  const [saveWallet, setSaveWallet] = useState(false);
+  const [paying, setPaying] = useState(false);
+
   useEffect(() => {
     api<{ client_id: string }>("/api/paypal/config").then((c) => setClientId(c.client_id)).catch(() => setClientId(""));
+    api<{ saved: boolean; payer_email: string | null }>("/api/paypal/wallet").then(setWallet).catch(() => setWallet(null));
   }, []);
   if (clientId === null) return <Spinner label="Loading PayPal" />;
   if (!clientId)
     return <ErrorNote>PayPal Sandbox isn&apos;t configured. Add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to backend/.env.</ErrorNote>;
 
+  async function payWithSaved() {
+    setPaying(true);
+    onError("");
+    try {
+      const r = await api<{ transaction: Transaction }>("/api/paypal/orders/vaulted", {
+        method: "POST",
+        json: { payment_request_id: req.id },
+      });
+      onCaptured(r.transaction);
+    } catch (e) {
+      onError((e as Error).message);
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  async function forget() {
+    setWallet(await api<{ saved: boolean; payer_email: string | null }>("/api/paypal/wallet", { method: "DELETE" }));
+  }
+
   return (
-    <PayPalScriptProvider options={{ clientId, currency: req.currency, intent: "capture" }}>
-      <PayPalButtons
-        style={{ layout: "vertical", shape: "pill", label: "pay" }}
-        createOrder={async () => {
-          const r = await api<{ order_id: string }>("/api/paypal/orders", { method: "POST", json: { payment_request_id: req.id } });
-          return r.order_id;
-        }}
-        onCancel={() => onError("You closed the PayPal window before approving. Select the PayPal button to try again.")}
-        onApprove={async (data) => {
-          onError("");
-          try {
-            // The backend captures and validates; the browser callback alone proves nothing.
-            const r = await api<{ transaction: Transaction }>(`/api/paypal/orders/${data.orderID}/capture`, { method: "POST" });
-            onCaptured(r.transaction);
-          } catch (e) {
-            onError((e as Error).message);
-          }
-        }}
-        onError={(err) => {
-          console.error("PayPal checkout error:", err);
-          onError(
-            `PayPal checkout failed: ${String((err as { message?: string })?.message ?? err).slice(0, 200)}. ` +
-              "Log in with a Sandbox personal (buyer) account. If that account is in India, create a United States one in the PayPal Developer dashboard.",
-          );
-        }}
-      />
-    </PayPalScriptProvider>
+    <div className="space-y-4">
+      {wallet?.saved && (
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <button className="btn w-full justify-center" onClick={payWithSaved} disabled={paying}>
+            {paying ? <Spinner label="Paying with saved PayPal" /> : `Pay ${req.currency} ${req.amount} with saved PayPal`}
+          </button>
+          <p className="mt-2 text-sm text-ink-soft">
+            Saved wallet{wallet.payer_email ? `: ${wallet.payer_email}` : ""}. No PayPal window needed; your proof already
+            unlocked this payment.{" "}
+            <button className="underline" onClick={forget}>Forget it</button>
+          </p>
+        </div>
+      )}
+      {!wallet?.saved && (
+        <label className="flex items-start gap-3">
+          <input type="checkbox" className="mt-1.5 h-4 w-4" checked={saveWallet} onChange={(e) => setSaveWallet(e.target.checked)} />
+          <span>
+            <span className="block font-medium">Save PayPal for one-click payments</span>
+            <span className="block text-sm text-ink-soft">
+              PayPal Vault keeps your wallet; next time a fresh proof plus one click pays, without the PayPal window.
+            </span>
+          </span>
+        </label>
+      )}
+      <PayPalScriptProvider options={{ clientId, currency: req.currency, intent: "capture" }}>
+        <PayPalButtons
+          style={{ layout: "vertical", shape: "pill", label: "pay" }}
+          forceReRender={[saveWallet]}
+          createOrder={async () => {
+            const r = await api<{ order_id: string }>("/api/paypal/orders", {
+              method: "POST",
+              json: { payment_request_id: req.id, save_wallet: saveWallet },
+            });
+            return r.order_id;
+          }}
+          onCancel={() => onError("You closed the PayPal window before approving. Select the PayPal button to try again.")}
+          onApprove={async (data) => {
+            onError("");
+            try {
+              // The backend captures and validates; the browser callback alone proves nothing.
+              const r = await api<{ transaction: Transaction }>(`/api/paypal/orders/${data.orderID}/capture`, { method: "POST" });
+              onCaptured(r.transaction);
+            } catch (e) {
+              onError((e as Error).message);
+            }
+          }}
+          onError={(err) => {
+            console.error("PayPal checkout error:", err);
+            onError(
+              `PayPal checkout failed: ${String((err as { message?: string })?.message ?? err).slice(0, 200)}. ` +
+                "Log in with a Sandbox personal (buyer) account. If that account is in India, create a United States one in the PayPal Developer dashboard.",
+            );
+          }}
+        />
+      </PayPalScriptProvider>
+    </div>
   );
 }
 
