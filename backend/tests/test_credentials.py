@@ -46,3 +46,22 @@ def test_only_reviewer_can_revoke(client, make_user):
     assert client.post(f"/api/credentials/{cred['id']}/revoke", headers=u["headers"]).status_code == 403
     rev = make_user("reviewer")
     assert client.post(f"/api/credentials/{cred['id']}/revoke", headers=rev["headers"]).json()["status"] == "revoked"
+
+
+def test_reloaded_proof_material_still_matches_signature(client, make_user):
+    # The browser re-fetches proof material from /me before proving. It must be
+    # byte-identical to what was signed, whatever the server's local timezone.
+    from datetime import timezone
+
+    from app.db import SessionLocal
+    from app.models import Credential
+
+    u = make_user()
+    approve_kyc(u["user"]["id"])
+    issued = client.post("/api/credentials/issue", json={"holder_commitment": commitment(HOLDER_SECRET)}, headers=u["headers"]).json()
+    reloaded = next(c for c in client.get("/api/credentials/me", headers=u["headers"]).json() if c["id"] == issued["id"])
+    pm = reloaded["proof_material"]
+    assert pm == issued["proof_material"]
+    assert zk.verify_signature({k: pm[k] for k in ("credentialId", "holderCommitment", "kycApproved", "expiresAt")}, pm["signature"])
+    with SessionLocal() as db:
+        assert db.get(Credential, issued["id"]).expires_at.tzinfo == timezone.utc

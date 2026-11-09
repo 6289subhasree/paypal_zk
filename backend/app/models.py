@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -16,6 +17,27 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class UTCDateTime(TypeDecorator):
+    """Timezone-aware UTC datetime on every database.
+
+    SQLite drops the offset, so values came back naive and Python read them as
+    local time. That shifted signed credential expiry timestamps off UTC.
+    """
+
+    impl = DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value
+
+
 class User(Base):
     __tablename__ = "users"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
@@ -23,8 +45,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     display_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(20), default="user")  # user | reviewer
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, onupdate=utcnow)
 
 
 class KycSession(Base):
@@ -39,10 +61,10 @@ class KycSession(Base):
     checks: Mapped[list | None] = mapped_column(JSON, nullable=True)  # [{name, passed, simulated, detail}]
     ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     transcript: Mapped[list | None] = mapped_column(JSON, nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
     reviewed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
     decision_reason_code: Mapped[str | None] = mapped_column(String(60), nullable=True)
 
 
@@ -57,8 +79,8 @@ class Credential(Base):
     credential_reference: Mapped[str] = mapped_column(String(100), unique=True)
     holder_commitment: Mapped[str] = mapped_column(String(100))
     kyc_approved: Mapped[int] = mapped_column(Integer, default=1)
-    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    issued_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | revoked
     signature_reference: Mapped[dict] = mapped_column(JSON)  # {s, r8x, r8y}
     revocation_tag: Mapped[str] = mapped_column(String(100), index=True)
@@ -76,8 +98,8 @@ class PaymentRequest(Base):
     challenge: Mapped[str] = mapped_column(String(100))  # field element bound into the proof
     # open | authorized | paid | expired | cancelled
     status: Mapped[str] = mapped_column(String(20), default="open")
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class Proof(Base):
@@ -91,7 +113,7 @@ class Proof(Base):
     nullifier: Mapped[str | None] = mapped_column(String(100), nullable=True)
     verification_status: Mapped[str] = mapped_column(String(20))  # accepted | rejected
     rejection_code: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    verified_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class UsedNullifier(Base):
@@ -99,7 +121,7 @@ class UsedNullifier(Base):
     __tablename__ = "used_nullifiers"
     nullifier: Mapped[str] = mapped_column(String(100), primary_key=True)
     payment_request_id: Mapped[str] = mapped_column(ForeignKey("payment_requests.id"))
-    used_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    used_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class Transaction(Base):
@@ -113,8 +135,8 @@ class Transaction(Base):
     currency: Mapped[str] = mapped_column(String(3))
     status: Mapped[str] = mapped_column(String(30))  # CREATED | APPROVED | COMPLETED | FAILED ...
     environment: Mapped[str] = mapped_column(String(10))  # sandbox | live
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    captured_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    captured_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
 class AuditLog(Base):
@@ -125,4 +147,4 @@ class AuditLog(Base):
     resource_type: Mapped[str] = mapped_column(String(40))
     resource_id: Mapped[str] = mapped_column(String(64))
     meta: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
