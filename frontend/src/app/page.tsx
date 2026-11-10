@@ -1,185 +1,569 @@
+"use client";
+import Image from "next/image";
 import Link from "next/link";
-import { FeatureIcon } from "@/components/FeatureIcon";
+import { useState } from "react";
+import { LandingNav } from "@/components/LandingNav";
 import { LandingPassport } from "@/components/LandingPassport";
 import { Logo } from "@/components/Logo";
+import { PixelBadge } from "@/components/PixelBadge";
+import { PixelRosette } from "@/components/PixelRosette";
+import { PixelText } from "@/components/PixelText";
+import { PixelWave } from "@/components/PixelWave";
 
-const FEATURES = [
-  {
-    icon: "shield" as const,
-    title: "An AI-guided check, decided by a person",
-    body: "An assistant walks you through a test-document check. OCR reads the card, liveness runs on your device, and a reviewer makes the call.",
-  },
-  {
-    icon: "card" as const,
-    title: "A passport only you can use",
-    body: "The issuer signs a credential bound to a secret that never leaves your browser. It carries no name and no document number.",
-  },
-  {
-    icon: "lock" as const,
-    title: "Checkout that needs a proof",
-    body: "Each payment gets a fresh zero-knowledge proof tied to that one request. Altered, stale, revoked or replayed proofs keep PayPal locked.",
-  },
-  {
-    icon: "eighteen" as const,
-    title: "18+ without your birthday",
-    body: "When a merchant needs an adult, your proof shows you're old enough. Your date of birth stays with you.",
-  },
-  {
-    icon: "bolt" as const,
-    title: "One click next time",
-    body: "Save PayPal with Vault on your first payment. After that, a fresh proof and one click pay, with no popup.",
-  },
-  {
-    icon: "arrow" as const,
-    title: "Payouts to verified people",
-    body: "Platforms pay freelancers through PayPal Payouts, and the money only moves once the recipient proves they passed KYC.",
-  },
-];
+export default function LandingPage() {
+  const [activeVerifyTab, setActiveVerifyTab] = useState<"verify" | "review">("verify");
+  const [activePayTab, setActivePayTab] = useState<"receipt" | "rejected">("receipt");
 
-const STEPS = [
-  { who: "You", title: "Verify once", body: "Upload a SPECIMEN test card and finish the liveness prompts. A reviewer approves the session." },
-  { who: "Issuer", title: "Get your Passport", body: "Your browser makes a secret; the issuer signs a credential bound to its hash." },
-  { who: "Your browser", title: "Prove, per payment", body: "A Groth16 proof in about two seconds: signed, approved, unexpired, yours, and for this payment only." },
-  { who: "PayPal", title: "Pay", body: "The proof unlocks Sandbox checkout. The backend captures and checks the payment before calling it paid." },
-];
-
-const SEES = ["One-time nullifier", "Revocation tag", "Issuer key (2 values)", "Timestamp", "Payment challenge", "Verifier ID", "Today's date", "Minimum age"];
-const KEEPS = ["Your name", "Date of birth", "Document number", "Credential ID", "Holder secret"];
-
-export default function Landing() {
   return (
-    <div className="min-h-dvh overflow-x-clip">
-      <section className="hero-gradient relative">
-        <div className="hero-pattern pointer-events-none absolute inset-0" aria-hidden />
-        <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 text-white">
-          <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <Logo />
-            ZK Pass
-          </span>
-          <p className="hidden text-sm font-medium text-white/85 md:block">
-            Private KYC for PayPal payments <span className="mx-2 text-white/40">|</span> ZK proofs · AI
-          </p>
-          <nav className="flex items-center gap-2">
-            <Link href="/login" className="hidden rounded-lg px-3 py-2 text-sm font-semibold hover:bg-white/10 sm:block">
-              Sign in
-            </Link>
-            <Link href="/register" className="btn btn-accent py-2 text-sm">
-              Get started
-            </Link>
-          </nav>
-        </header>
+    <div className="min-h-screen bg-white text-neutral-900 selection:bg-[#0808E8] selection:text-white">
+      {/* 1. Thin Navigation Bar */}
+      <LandingNav />
 
-        <div className="relative mx-auto flex min-h-[78svh] max-w-6xl flex-col items-center justify-center px-4 pb-28 pt-10 text-center text-white">
-          <h1 className="text-[clamp(4.5rem,15vw,10rem)] font-semibold leading-[0.9] tracking-[-0.06em] drop-shadow-[0_6px_30px_rgba(0,28,100,0.35)]">
-            ZK Pass
+      {/* 2. Hero Section - Electric Blue with Pixel Wave Canvas */}
+      <section className="relative overflow-hidden bg-[#0808E8] pt-16 sm:pt-24 text-white">
+        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
+          {/* Main Editorial Headline with blue-white contrasting box */}
+          <h1 className="font-display text-[clamp(2.75rem,6.8vw,5.5rem)] font-bold tracking-tight text-white leading-[1.06]">
+            Verify once.{" "}
+            <span className="inline-block bg-white text-[#0808E8] px-3.5 py-0.5 rounded-none font-bold tracking-tight shadow-sm">
+              Prove anywhere.
+            </span>
           </h1>
-          <p className="mt-6 text-[clamp(1.25rem,2.4vw,1.6rem)] font-medium leading-snug tracking-[-0.02em]">
-            Verify once. Prove anywhere.
-            <br />
-            Pay with PayPal.
+
+          {/* Supporting line */}
+          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-white/85">
+            Your identity stays yours. Prove what matters, authorize payments, and keep sensitive
+            information private.
           </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Link href="/register" className="btn btn-accent px-5 py-3">Start verification</Link>
-            <Link href="/login" className="btn btn-glass px-5 py-3">I have an account</Link>
+
+          {/* Compact CTA Buttons */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-[#0808E8] shadow-sm transition hover:bg-neutral-100"
+            >
+              <span>Explore the demo</span>
+              <span aria-hidden>→</span>
+            </Link>
+            <a
+              href="#overview"
+              className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
+            >
+              How it works
+            </a>
           </div>
         </div>
-      </section>
 
-      <section className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-24 lg:grid-cols-[1fr_1.05fr] [&>*]:min-w-0">
-        <div>
-          <h2 className="text-[clamp(2.2rem,4.4vw,3.4rem)] font-medium">Prove you passed KYC. Share nothing else.</h2>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-soft">
-            Every new app asks for your ID again. With ZK Pass your browser sends a zero-knowledge proof instead,
-            and only a valid proof made for this exact payment opens PayPal checkout.
-          </p>
-          <p className="mt-6 max-w-lg text-sm text-ink-soft">
-            Hackathon prototype: test identity documents only, payments in PayPal Sandbox. It removes repeated
-            identity disclosure; it doesn&apos;t speed up bank settlement.
-          </p>
+        {/* Japanese woodblock-style animated pixel wave at the bottom */}
+        <div className="mt-10 sm:mt-14 w-full">
+          <PixelWave variant="hero" height={280} className="w-full" />
         </div>
-        <LandingPassport />
       </section>
 
-      <section className="bg-paper-deep">
-        <div className="mx-auto max-w-6xl px-4 py-24">
-          <h2 className="max-w-3xl text-[clamp(2.2rem,4.4vw,3.4rem)] font-medium">
-            One proof gate in front of everything PayPal does.
+      {/* 3. Technology / Protocol Bar */}
+      <section className="border-b border-neutral-200 bg-neutral-50/70 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-2 gap-x-6 px-4 text-xs font-mono text-neutral-500 sm:px-6">
+          <span>Circom 2.1 & Groth16</span>
+          <span className="hidden sm:inline text-neutral-300">/</span>
+          <span>BabyJubJub EdDSA</span>
+          <span className="hidden sm:inline text-neutral-300">/</span>
+          <span>Poseidon Commitment</span>
+          <span className="hidden sm:inline text-neutral-300">/</span>
+          <span>MediaPipe On-Device</span>
+          <span className="hidden sm:inline text-neutral-300">/</span>
+          <span>PayPal Sandbox Orders v2</span>
+          <span className="hidden sm:inline text-neutral-300">/</span>
+          <span>Tesseract OCR</span>
+        </div>
+      </section>
+
+      {/* 4. Trust / Introduction Section */}
+      <section id="overview" className="relative bg-[#FAFAFA] py-24 sm:py-32">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
+          {/* Centered pixel badge */}
+          <div className="flex justify-center mb-6">
+            <PixelBadge />
+          </div>
+
+          {/* Elegant serif headline */}
+          <h2 className="font-serif text-[clamp(2.2rem,4.5vw,3.75rem)] font-normal tracking-tight text-neutral-900 leading-[1.14]">
+            Your identity shouldn&apos;t be the price of making a payment.
           </h2>
-          <div className="mt-16 grid gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <div key={f.title}>
-                <FeatureIcon kind={f.icon} />
-                <h3 className="mt-5 text-lg font-semibold tracking-[-0.02em]">{f.title}</h3>
-                <p className="mt-2 leading-relaxed text-ink-soft">{f.body}</p>
+
+          {/* Editorial Problem & Solution Copy */}
+          <div className="mt-8 space-y-4 text-base sm:text-lg leading-relaxed text-neutral-600">
+            <p>
+              Traditional verification forces users to repeatedly upload photos of passports, tax IDs, and
+              personal details to every merchant. Every transaction duplicates identity risk across databases
+              you cannot inspect or control.
+            </p>
+            <p className="font-medium text-neutral-800">
+              ZK Pass changes the model: verify once with AI assistance, hold an issuer-signed cryptographic
+              credential in your browser, and prove only what&apos;s strictly necessary.
+            </p>
+          </div>
+
+          {/* Action links */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="https://github.com/6289subhasree/paypal_zk"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-neutral-700 shadow-xs transition hover:border-neutral-400 hover:text-neutral-950"
+            >
+              Explore GitHub
+            </a>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#0808E8] px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#0000CC]"
+            >
+              <span>Launch Demo</span>
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Product Showcase Sections — Light Grey Canvas (#EDEDF0) */}
+      <div className="bg-[#EDEDF0] py-24 sm:py-32 space-y-28 sm:space-y-36">
+        {/* Showcase 01 — VERIFY */}
+        <section id="verify" className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
+            {/* Left Column / Editorial Sidebar */}
+            <div className="lg:col-span-4 space-y-6">
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-neutral-500">
+                01 / VERIFY
+              </span>
+              <h3 className="font-serif text-3xl sm:text-4xl font-normal text-neutral-900 leading-[1.15]">
+                Verify your identity. Keep control of your data.
+              </h3>
+              <p className="text-sm sm:text-base leading-relaxed text-neutral-600">
+                An AI assistant guides you through the KYC session. Tesseract OCR parses test documents,
+                rule-based checks compare identity fields, and MediaPipe runs on-device blink and head-turn
+                liveness tests directly in your browser. A human reviewer approves the final evidence summary.
+              </p>
+
+              {/* Sidebar quote card */}
+              <div className="rounded-xl border border-neutral-300/80 bg-white/90 p-5 shadow-xs">
+                <p className="text-xs italic text-neutral-700 leading-relaxed">
+                  &ldquo;Raw document images are processed in memory and immediately discarded. Masked
+                  outcomes and cryptographic commitments are all that survive.&rdquo;
+                </p>
+                <div className="mt-3 flex items-center gap-2 border-t border-neutral-200 pt-3 text-[11px] font-mono text-neutral-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span>zkpass/engine · OCR &amp; Liveness</span>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-24">
-        <h2 className="text-[clamp(2.2rem,4.4vw,3.4rem)] font-medium">How a payment goes.</h2>
-        <ol className="mt-12 divide-y divide-line border-y border-line">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="grid gap-2 py-6 sm:grid-cols-[4rem_10rem_1fr] sm:items-baseline sm:gap-6">
-              <span className="font-mono text-sm text-ink-soft">0{i + 1}</span>
-              <span>
-                <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[13px] font-medium text-brand">{s.who}</span>
-              </span>
-              <span>
-                <span className="block text-xl font-semibold tracking-[-0.02em]">{s.title}</span>
-                <span className="mt-1 block text-ink-soft">{s.body}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
+              <div>
+                <Link
+                  href="/verify"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0808E8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0000CC]"
+                >
+                  <span>Try verification</span>
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
+            </div>
 
-      <section className="mx-auto max-w-6xl px-4 pb-24">
-        <div className="grid overflow-hidden rounded-2xl border border-line md:grid-cols-2">
-          <div className="bg-navy-deep p-8 text-white">
-            <h3 className="text-2xl font-semibold">What the verifier receives</h3>
-            <p className="mt-2 text-white/65">Nine public numbers and the proof. That&apos;s all.</p>
-            <ul className="mt-6 grid grid-cols-2 gap-2 font-mono text-[13px]">
-              {SEES.map((s) => (
-                <li key={s} className="rounded-lg bg-white/8 px-3 py-2 ring-1 ring-white/15">{s}</li>
-              ))}
-            </ul>
+            {/* Right Column / Large Screenshot Canvas */}
+            <div className="lg:col-span-8">
+              <div className="relative overflow-hidden rounded-2xl border border-neutral-300/90 bg-white shadow-md">
+                {/* Screenshot Header Bar */}
+                <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100/90 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="ml-2 font-mono text-[11px] text-neutral-500">
+                      localhost:3000/{activeVerifyTab}
+                    </span>
+                  </div>
+                  <div className="flex gap-1 rounded-md bg-neutral-200/80 p-0.5 text-xs font-medium">
+                    <button
+                      onClick={() => setActiveVerifyTab("verify")}
+                      className={`rounded px-2.5 py-1 transition ${
+                        activeVerifyTab === "verify" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                      }`}
+                    >
+                      Payer Wizard
+                    </button>
+                    <button
+                      onClick={() => setActiveVerifyTab("review")}
+                      className={`rounded px-2.5 py-1 transition ${
+                        activeVerifyTab === "review" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                      }`}
+                    >
+                      Reviewer Queue
+                    </button>
+                  </div>
+                </div>
+
+                {/* Actual Real Screenshot */}
+                <div className="relative aspect-[16/10] bg-neutral-50">
+                  <Image
+                    src={activeVerifyTab === "verify" ? "/verify.png" : "/review.png"}
+                    alt={activeVerifyTab === "verify" ? "ZK Pass Verification Wizard UI" : "Reviewer Queue UI"}
+                    fill
+                    className="object-cover object-top"
+                    priority
+                  />
+                  {/* Floating blue feature badge */}
+                  <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg bg-[#0808E8] px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
+                    <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                    <span>01 AI Guidance + On-Device Liveness</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="bg-surface p-8">
-            <h3 className="text-2xl font-semibold">What stays in your browser</h3>
-            <p className="mt-2 text-ink-soft">Never sent to a merchant, never stored by the verifier.</p>
-            <ul className="mt-6 grid grid-cols-2 gap-2 text-[15px]">
-              {KEEPS.map((s) => (
-                <li key={s} className="flex items-center gap-2 rounded-lg bg-paper-deep px-3 py-2">
-                  <span aria-hidden className="text-approve">●</span>
-                  {s}
+        </section>
+
+        {/* Showcase 02 — PASSPORT (Alternating layout) */}
+        <section id="passport" className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            {/* Left Column: Interactive Passport Credential */}
+            <div className="order-2 lg:order-1 lg:col-span-7">
+              <div className="relative rounded-2xl border border-neutral-300/80 bg-neutral-100/70 p-6 sm:p-10 shadow-md">
+                <LandingPassport />
+
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500 font-mono border-t border-neutral-200/80 pt-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    BabyJubJub Curve: 248-bit scalar
+                  </span>
+                  <span>Poseidon(HolderSecret) = Commit</span>
+                </div>
+
+                {/* Floating blue feature badge */}
+                <div className="absolute -top-3 right-6 z-10 rounded-full bg-[#0808E8] px-3.5 py-1 text-xs font-semibold text-white shadow-md">
+                  02 Browser-Bound EdDSA
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Editorial Copy */}
+            <div className="order-1 lg:order-2 lg:col-span-5 space-y-6">
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-neutral-500">
+                02 / PASSPORT
+              </span>
+              <h3 className="font-serif text-3xl sm:text-4xl font-normal text-neutral-900 leading-[1.15]">
+                One credential. A lifetime of private proofs.
+              </h3>
+              <p className="text-sm sm:text-base leading-relaxed text-neutral-600">
+                Your browser creates a cryptographic secret that never leaves local storage. The issuer
+                receives only your public commitment, signing it with EdDSA over the BabyJubJub curve.
+              </p>
+              <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-700">
+                <li className="flex items-center gap-2">
+                  <span className="text-[#0808E8] font-bold">✓</span>
+                  <span>Zero identity documents stored on issuer servers</span>
                 </li>
-              ))}
-            </ul>
+                <li className="flex items-center gap-2">
+                  <span className="text-[#0808E8] font-bold">✓</span>
+                  <span>Instant client-side key generation in milliseconds</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[#0808E8] font-bold">✓</span>
+                  <span>Automatic revocation checking via verifier domain tags</span>
+                </li>
+              </ul>
+              <div>
+                <Link
+                  href="/passport"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0808E8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0000CC]"
+                >
+                  <span>Issue Passport</span>
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Showcase 03 — PAY */}
+        <section id="pay" className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
+            {/* Left Column / Editorial */}
+            <div className="lg:col-span-4 space-y-6">
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-neutral-500">
+                03 / PAY
+              </span>
+              <h3 className="font-serif text-3xl sm:text-4xl font-normal text-neutral-900 leading-[1.15]">
+                Prove you&apos;re eligible. Never reveal why.
+              </h3>
+              <p className="text-sm sm:text-base leading-relaxed text-neutral-600">
+                For every payment, your browser compiles a Groth16 zero-knowledge proof in two seconds. It
+                proves your KYC approval, credential expiry, and age requirement without revealing your birth
+                date or holder secret.
+              </p>
+
+              <div className="rounded-xl border border-neutral-300/80 bg-white/90 p-5 shadow-xs text-xs space-y-2 font-mono text-neutral-700">
+                <div className="text-neutral-500 font-bold uppercase">Verifier receives 9 public signals:</div>
+                <div className="truncate text-neutral-600">nullifier, revocation_tag, issuer_pk,</div>
+                <div className="truncate text-neutral-600">timestamp, payment_challenge, verifier_id...</div>
+                <div className="text-emerald-600 font-semibold pt-1">Never sees name, birthdate, or ID.</div>
+              </div>
+
+              <div>
+                <Link
+                  href="/pay"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0808E8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0000CC]"
+                >
+                  <span>Test payment gate</span>
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Column / Proof & Capture Showcase */}
+            <div className="lg:col-span-8">
+              <div className="relative overflow-hidden rounded-2xl border border-neutral-300/90 bg-white shadow-md">
+                {/* Header bar */}
+                <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100/90 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+                    <span className="ml-2 font-mono text-[11px] text-neutral-500">
+                      PayPal Sandbox Checkout
+                    </span>
+                  </div>
+                  <div className="flex gap-1 rounded-md bg-neutral-200/80 p-0.5 text-xs font-medium">
+                    <button
+                      onClick={() => setActivePayTab("receipt")}
+                      className={`rounded px-2.5 py-1 transition ${
+                        activePayTab === "receipt" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                      }`}
+                    >
+                      PayPal Capture Receipt
+                    </button>
+                    <button
+                      onClick={() => setActivePayTab("rejected")}
+                      className={`rounded px-2.5 py-1 transition ${
+                        activePayTab === "rejected" ? "bg-white text-neutral-900 shadow-xs" : "text-neutral-600 hover:text-neutral-900"
+                      }`}
+                    >
+                      Attack Defense Proof
+                    </button>
+                  </div>
+                </div>
+
+                {/* Screenshot Container */}
+                <div className="relative aspect-[16/10] bg-neutral-50">
+                  <Image
+                    src={activePayTab === "receipt" ? "/receipt.png" : "/rejected.png"}
+                    alt={activePayTab === "receipt" ? "PayPal Sandbox capture receipt" : "Tampered proof rejected"}
+                    fill
+                    className="object-cover object-top"
+                  />
+
+                  {/* Floating blue feature badge */}
+                  <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-lg bg-[#0808E8] px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
+                    <span className="h-2 w-2 rounded-full bg-amber-300" />
+                    <span>03 PayPal Sandbox Orders v2 + Vault</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* 6. Testimonial / Privacy Statement Section */}
+      <section className="bg-white py-24 sm:py-32 border-y border-neutral-200">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            {/* Left: Philosophy quote */}
+            <div className="lg:col-span-7 space-y-6">
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#0808E8]">
+                WHY IT MATTERS
+              </span>
+              <h2 className="font-serif text-[clamp(2.3rem,4.8vw,4rem)] font-normal text-neutral-900 leading-[1.12]">
+                &ldquo;Your documents are yours. Your proofs are enough.&rdquo;
+              </h2>
+              <p className="text-base sm:text-lg leading-relaxed text-neutral-600 max-w-xl">
+                The verifier receives mathematical certainty of eligibility, not your identity documents,
+                full legal name, date of birth, or holder secret. Altered, stale, or replayed proofs fail
+                in-circuit before PayPal checkout can ever unlock.
+              </p>
+              <div className="pt-2 text-xs font-mono text-neutral-400">
+                ZK Pass Cryptographic Architecture · Zero-Knowledge Payment Protocol
+              </div>
+            </div>
+
+            {/* Right: Intricate geometric pixel rosette */}
+            <div className="lg:col-span-5 flex justify-center lg:justify-end">
+              <div className="relative p-6 rounded-2xl bg-neutral-50 border border-neutral-200/80 shadow-xs">
+                <PixelRosette size={260} />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="hero-gradient relative overflow-hidden">
-        <div className="hero-pattern pointer-events-none absolute inset-0" aria-hidden />
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 py-24 text-center text-white">
-          <h2 className="text-[clamp(2.4rem,5vw,4rem)] font-semibold">Verify once.</h2>
-          <p className="mt-3 text-lg text-white/85">Then let a proof do the talking at checkout.</p>
-          <Link href="/register" className="btn btn-accent mt-8 px-5 py-3">Start verification</Link>
+      {/* 7. Dark Product Capabilities Section (Charcoal #18181b) */}
+      <section className="relative overflow-hidden bg-[#18181b] py-24 sm:py-32 text-white">
+        {/* Subtle corner pixel scatter */}
+        <div className="pointer-events-none absolute right-0 top-0 w-80 opacity-60">
+          <PixelWave variant="scatter" height={160} />
+        </div>
+
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          {/* Centered headline */}
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="font-serif text-[clamp(2.4rem,5vw,4rem)] font-normal text-white leading-[1.14]">
+              Built to make private payments actually work.
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-neutral-400">
+              Three coordinated layers of defense against unnecessary identity disclosure.
+            </p>
+          </div>
+
+          {/* Three Feature Cards */}
+          <div className="mt-16 grid gap-8 md:grid-cols-3">
+            {/* Card 1 */}
+            <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#202023] p-7 transition hover:border-white/20">
+              <div className="space-y-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0808E8] text-white font-mono text-sm font-bold">
+                  01
+                </div>
+                <h3 className="text-xl font-semibold text-white tracking-tight">
+                  Verify once, reuse everywhere
+                </h3>
+                <p className="text-sm leading-relaxed text-neutral-400">
+                  Issuer signs an EdDSA signature over BabyJubJub curve bound to Poseidon hash of your holder
+                  secret. You never upload documents a second time.
+                </p>
+              </div>
+              <div className="mt-6 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-neutral-400 border border-white/5">
+                <code>HolderSecret → Poseidon → EdDSA(Issuer)</code>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#202023] p-7 transition hover:border-white/20">
+              <div className="space-y-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0808E8] text-white font-mono text-sm font-bold">
+                  02
+                </div>
+                <h3 className="text-xl font-semibold text-white tracking-tight">
+                  Cryptographic proof, not trust
+                </h3>
+                <p className="text-sm leading-relaxed text-neutral-400">
+                  In-circuit Groth16 verification with single-use nullifiers bound to each payment challenge.
+                  Tampering, replaying, or forged signatures are mathematically rejected.
+                </p>
+              </div>
+              <div className="mt-6 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-neutral-400 border border-white/5">
+                <code>Nullifier = Poseidon(secret, challenge)</code>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#202023] p-7 transition hover:border-white/20">
+              <div className="space-y-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0808E8] text-white font-mono text-sm font-bold">
+                  03
+                </div>
+                <h3 className="text-xl font-semibold text-white tracking-tight">
+                  Real payment workflows
+                </h3>
+                <p className="text-sm leading-relaxed text-neutral-400">
+                  Integrates directly with PayPal Sandbox Orders v2 create and capture, PayPal Vault for
+                  one-click repeat payments, refunds, and verified freelancer payouts.
+                </p>
+              </div>
+              <div className="mt-6 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-neutral-400 border border-white/5">
+                <code>PayPal Orders v2 · Vault · Payouts v1</code>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-ink-soft">
-          <span className="flex items-center gap-2 font-semibold text-ink">
-            <Logo dark />
-            ZK Pass
-          </span>
-          <span>Independent hackathon prototype, not a PayPal product. Sandbox only, no real money.</span>
-          <a href="https://github.com/6289subhasree/paypal_zk" className="font-medium text-brand hover:underline">
-            Source on GitHub
-          </a>
+      {/* 8. Final CTA Banner — Electric Blue */}
+      <section className="bg-white py-20 px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[#0808E8] text-white shadow-xl relative">
+          <div className="grid lg:grid-cols-12 items-center">
+            {/* Left side: Heading & CTAs */}
+            <div className="lg:col-span-7 p-8 sm:p-14 space-y-6 z-10">
+              <h2 className="font-serif text-[clamp(2.3rem,4.5vw,3.75rem)] font-normal text-white leading-[1.12]">
+                Your identity. Your control. Your proof.
+              </h2>
+              <p className="text-base sm:text-lg text-white/85 max-w-lg leading-relaxed">
+                Experience a different approach to identity verification and payment authorization.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-[#0808E8] shadow-sm transition hover:bg-neutral-100"
+                >
+                  <span>Try the demo</span>
+                  <span aria-hidden>→</span>
+                </Link>
+                <a
+                  href="https://github.com/6289subhasree/paypal_zk"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
+                >
+                  Explore GitHub
+                </a>
+              </div>
+            </div>
+
+            {/* Right side: Pixel Wave Tunnel */}
+            <div className="lg:col-span-5 h-64 lg:h-full relative overflow-hidden flex items-center justify-center">
+              <PixelWave variant="cta" height={240} className="w-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Footer — Charcoal / Black with Oversized Pixelated Typography */}
+      <footer className="bg-[#111113] pt-20 pb-12 text-white border-t border-neutral-800">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          {/* Top Footer Row */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-neutral-800/80 pb-12">
+            <div className="flex items-center gap-3">
+              <Logo dark className="h-6 w-6" />
+              <span className="text-xl font-bold tracking-tight">ZK Pass</span>
+              <span className="ml-2 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-mono text-neutral-400">
+                Sandbox Mode
+              </span>
+            </div>
+
+            <nav className="flex flex-wrap items-center gap-6 text-xs text-neutral-400 font-medium">
+              <Link href="/verify" className="hover:text-white transition">Verify</Link>
+              <Link href="/passport" className="hover:text-white transition">Passport</Link>
+              <Link href="/pay" className="hover:text-white transition">Pay</Link>
+              <Link href="/payouts" className="hover:text-white transition">Payouts</Link>
+              <Link href="/history" className="hover:text-white transition">History</Link>
+              <a
+                href="https://github.com/6289subhasree/paypal_zk"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white transition"
+              >
+                GitHub
+              </a>
+            </nav>
+          </div>
+
+          {/* Centerpiece: Oversized Pixelated ZK PASS Wordmark */}
+          <div className="py-14 sm:py-20 select-none opacity-85">
+            <PixelText text="ZK PASS" />
+          </div>
+
+          {/* Bottom disclaimer and copyright */}
+          <div className="border-t border-neutral-800/80 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 font-mono">
+            <p>
+              Independent hackathon prototype for PayPal AI Hackathon. All identity data is mock data and payments
+              run in PayPal Sandbox.
+            </p>
+            <p>© 2026 ZK Pass. Open source MIT.</p>
+          </div>
         </div>
       </footer>
     </div>
