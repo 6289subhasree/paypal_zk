@@ -1,24 +1,74 @@
 @import "tailwindcss";
 
 /*
- * ZK Pass design tokens, built on PayPal's palette:
- * deep navy and PayPal blue for structure, bright blue for links and focus,
- * and the PayPal checkout yellow as the single accent.
+ * Cotool Exact Fonts: Moderat Serif and Suisse Intl
+ */
+@font-face {
+  font-family: 'moderatSerif';
+  src: url('/fonts/ModeratSerif_Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'moderatSerif';
+  src: url('/fonts/ModeratSerif_Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'suisseIntl';
+  src: url('/fonts/SuisseIntl_Book.woff2') format('woff2');
+  font-weight: 350;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'suisseIntl';
+  src: url('/fonts/SuisseIntl_Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'suisseIntl';
+  src: url('/fonts/SuisseIntl_Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * ZK Pass design tokens:
+ * Electric cobalt blue, editorial typography, pixel-art particles, and clean neutrals.
  */
 :root {
   --navy-deep: #001c64;
   --navy: #003087;
+  --electric: #0018f2;
+  --electric-deep: #0000CC;
   --brand: #0070e0;
   --brand-soft: #e8f1fc;
-  --sky: #a9c8f5;
+  --sky: #a9d5f5;
   --yellow: #ffc439;
   --yellow-deep: #f2b01e;
+  --pink: #ff72f3;
+  --red-accent: #ff0402;
+
+  --charcoal: #18181b;
+  --charcoal-deep: #111113;
 
   --paper: #ffffff;
   --paper-deep: #f3f6fb;
   --surface: #ffffff;
-  --ink: #001435;
-  --ink-soft: #566074;
+  --canvas-grey: #EDEDF0;
+  --ink: #111111;
+  --ink-soft: #666666;
   --line: #e1e6ef;
   --line-strong: #cdd5e2;
 
@@ -28,10 +78,17 @@
   --reject-soft: #fdecea;
   --sim: #8a5a00;
   --sim-soft: #fff5d6;
-  --focus: #0070e0;
+  --focus: #0018f2;
 }
 
 @theme inline {
+  --color-electric: var(--electric);
+  --color-electric-deep: var(--electric-deep);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-deep: var(--charcoal-deep);
+  --color-pink: var(--pink);
+  --color-red-accent: var(--red-accent);
+  --color-canvas-grey: var(--canvas-grey);
   --color-navy-deep: var(--navy-deep);
   --color-navy: var(--navy);
   --color-brand: var(--brand);
@@ -51,12 +108,13 @@
   --color-reject-soft: var(--reject-soft);
   --color-sim: var(--sim);
   --color-sim-soft: var(--sim-soft);
-  --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
-  --font-sans: "Inter Tight", "Inter", system-ui, sans-serif;
+  --font-display: moderatSerif, "Instrument Serif", Georgia, serif;
+  --font-sans: suisseIntl, "Inter Tight", system-ui, sans-serif;
+  --font-serif: moderatSerif, "Instrument Serif", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
-/* Base styles live in the base layer so Tailwind utilities can override them. */
+/* Base styles */
 @layer base {
   html {
     background: var(--paper);
@@ -72,11 +130,14 @@
     background: var(--paper);
   }
 
-  h1, h2, h3 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    line-height: 1.08;
-    letter-spacing: -0.035em;
+  .font-serif,
+  .font-moderat-serif {
+    font-family: moderatSerif, "Instrument Serif", Georgia, serif;
+  }
+
+  .font-sans,
+  .font-suisse {
+    font-family: suisseIntl, "Inter Tight", system-ui, sans-serif;
   }
 
   :focus-visible {
@@ -86,8 +147,28 @@
   }
 
   ::selection {
-    background: var(--yellow);
-    color: var(--navy-deep);
+    background: var(--electric);
+    color: #ffffff;
+  }
+}
+
+/* Left-to-right flowing wave animation matching Cotool scale */
+@keyframes waveFlowLtrExact {
+  0% {
+    transform: translate3d(-2030px, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-wave-flow-ltr {
+  animation: waveFlowLtrExact 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wave-flow-ltr {
+    animation: none;
   }
 }
 

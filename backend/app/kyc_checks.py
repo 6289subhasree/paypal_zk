@@ -14,10 +14,11 @@ from PIL import Image, ImageOps
 
 def ocr_image(data: bytes) -> str:
     import pytesseract
+    from pathlib import Path
 
     from .config import get_settings
 
-    if cmd := get_settings().tesseract_cmd:
+    if (cmd := get_settings().tesseract_cmd) and Path(cmd).exists():
         pytesseract.pytesseract.tesseract_cmd = cmd
 
     img = Image.open(io.BytesIO(data))
