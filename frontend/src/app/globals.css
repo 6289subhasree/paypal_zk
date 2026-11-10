@@ -1,21 +1,64 @@
 @import "tailwindcss";
 
 /*
+ * Cotool Exact Fonts: Moderat Serif and Suisse Intl
+ */
+@font-face {
+  font-family: 'moderatSerif';
+  src: url('/fonts/ModeratSerif_Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'moderatSerif';
+  src: url('/fonts/ModeratSerif_Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'suisseIntl';
+  src: url('/fonts/SuisseIntl_Book.woff2') format('woff2');
+  font-weight: 350;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'suisseIntl';
+  src: url('/fonts/SuisseIntl_Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'suisseIntl';
+  src: url('/fonts/SuisseIntl_Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
  * ZK Pass design tokens:
  * Electric cobalt blue, editorial typography, pixel-art particles, and clean neutrals.
  */
 :root {
   --navy-deep: #001c64;
   --navy: #003087;
-  --electric: #0808E8;
+  --electric: #0018f2;
   --electric-deep: #0000CC;
   --brand: #0070e0;
   --brand-soft: #e8f1fc;
-  --sky: #a9c8f5;
+  --sky: #a9d5f5;
   --yellow: #ffc439;
   --yellow-deep: #f2b01e;
-  --pink: #FF4AC8;
-  --red-accent: #FF3434;
+  --pink: #ff72f3;
+  --red-accent: #ff0402;
 
   --charcoal: #18181b;
   --charcoal-deep: #111113;
@@ -35,7 +78,7 @@
   --reject-soft: #fdecea;
   --sim: #8a5a00;
   --sim-soft: #fff5d6;
-  --focus: #0808E8;
+  --focus: #0018f2;
 }
 
 @theme inline {
@@ -65,9 +108,9 @@
   --color-reject-soft: var(--reject-soft);
   --color-sim: var(--sim);
   --color-sim-soft: var(--sim-soft);
-  --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
-  --font-sans: "Inter Tight", "Inter", system-ui, sans-serif;
-  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-display: moderatSerif, "Instrument Serif", Georgia, serif;
+  --font-sans: suisseIntl, "Inter Tight", system-ui, sans-serif;
+  --font-serif: moderatSerif, "Instrument Serif", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
@@ -87,8 +130,14 @@
     background: var(--paper);
   }
 
-  .font-serif {
-    font-family: var(--font-serif);
+  .font-serif,
+  .font-moderat-serif {
+    font-family: moderatSerif, "Instrument Serif", Georgia, serif;
+  }
+
+  .font-sans,
+  .font-suisse {
+    font-family: suisseIntl, "Inter Tight", system-ui, sans-serif;
   }
 
   :focus-visible {
@@ -100,6 +149,26 @@
   ::selection {
     background: var(--electric);
     color: #ffffff;
+  }
+}
+
+/* Left-to-right flowing wave animation */
+@keyframes waveFlowLtr {
+  0% {
+    transform: translate3d(-33.333333%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-wave-ltr {
+  animation: waveFlowLtr 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wave-ltr {
+    animation: none;
   }
 }
 

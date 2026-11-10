@@ -2,6 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { HeroWave } from "@/components/HeroWave";
 import { LandingNav } from "@/components/LandingNav";
 import { LandingPassport } from "@/components/LandingPassport";
 import { Logo } from "@/components/Logo";
@@ -15,23 +16,23 @@ export default function LandingPage() {
   const [activePayTab, setActivePayTab] = useState<"receipt" | "rejected">("receipt");
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 selection:bg-[#0808E8] selection:text-white">
+    <div className="min-h-screen bg-white text-neutral-900 selection:bg-[#0018f2] selection:text-white font-sans">
       {/* 1. Thin Navigation Bar */}
       <LandingNav />
 
-      {/* 2. Hero Section - Electric Blue with Pixel Wave Canvas */}
-      <section className="relative overflow-hidden bg-[#0808E8] pt-16 sm:pt-24 text-white">
-        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
-          {/* Main Editorial Headline with blue-white contrasting box */}
-          <h1 className="font-display text-[clamp(2.75rem,6.8vw,5.5rem)] font-bold tracking-tight text-white leading-[1.06]">
+      {/* 2. Hero Section - Electric Blue with exact Cotool animated wave flowing left-to-right */}
+      <section className="relative overflow-hidden bg-[#0018f2] pt-20 sm:pt-28 text-white">
+        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6 z-10">
+          {/* Main Editorial Headline with Cotool sky-blue contrasting highlight */}
+          <h1 className="font-sans text-[clamp(2.75rem,6.8vw,5.5rem)] font-bold tracking-tight text-white leading-[1.12]">
             Verify once.{" "}
-            <span className="inline-block bg-white text-[#0808E8] px-3.5 py-0.5 rounded-none font-bold tracking-tight shadow-sm">
+            <span className="font-serif text-[#0018f2] bg-[#a9d5f5] leading-[88%] inline px-2.5 pb-1 md:mx-2 box-decoration-clone md:whitespace-nowrap font-bold">
               Prove anywhere.
             </span>
           </h1>
 
           {/* Supporting line */}
-          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-white/85">
+          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-white/90">
             Your identity stays yours. Prove what matters, authorize payments, and keep sensitive
             information private.
           </p>
@@ -40,23 +41,25 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-[#0808E8] shadow-sm transition hover:bg-neutral-100"
+              className="inline-flex items-center gap-2 rounded-[7px] bg-white px-5 py-2.5 text-sm font-semibold text-[#0018f2] shadow-sm transition hover:bg-[#a9d5f5]"
             >
               <span>Explore the demo</span>
-              <span aria-hidden>→</span>
+              <svg width="11" height="10" viewBox="0 0 11 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.40909 9.64524L4.38494 8.63104L7.45242 5.56357H0V4.08203H7.45242L4.38494 1.01953L5.40909 0.000354886L10.2315 4.8228L5.40909 9.64524Z" fill="currentColor" />
+              </svg>
             </Link>
             <a
               href="#overview"
-              className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
+              className="inline-flex items-center gap-2 rounded-[7px] border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
             >
               How it works
             </a>
           </div>
         </div>
 
-        {/* Japanese woodblock-style animated pixel wave at the bottom */}
-        <div className="mt-10 sm:mt-14 w-full">
-          <PixelWave variant="hero" height={280} className="w-full" />
+        {/* Exact Cotool Japanese woodblock pixel wave flowing left-to-right */}
+        <div className="mt-8 sm:mt-12 w-full">
+          <HeroWave className="w-full" />
         </div>
       </section>
 
