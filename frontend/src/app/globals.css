@@ -56,136 +56,142 @@
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
-html {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.55;
-  letter-spacing: -0.006em;
-  -webkit-font-smoothing: antialiased;
+/* Base styles live in the base layer so Tailwind utilities can override them. */
+@layer base {
+  html {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background: var(--paper);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--yellow);
+    color: var(--navy-deep);
+  }
 }
 
-body {
-  background: var(--paper);
-}
+/* Component classes sit in the components layer so utilities (px-5, py-2...) still win. */
+@layer components {
+  /* ---------- controls ---------- */
 
-h1, h2, h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
-}
+  .btn {
+    display: inline-flex;
+    white-space: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 10px;
+    padding: 0.62rem 1.1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    background: var(--navy);
+    color: #fff;
+    transition: background-color 140ms ease, transform 140ms ease, opacity 140ms ease;
+  }
+  .btn:hover:not(:disabled) { background: var(--navy-deep); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
+  /* PayPal yellow: reserved for the one main call to action on a screen */
+  .btn-accent {
+    background: var(--yellow);
+    color: var(--navy-deep);
+  }
+  .btn-accent:hover:not(:disabled) { background: var(--yellow-deep); }
 
-::selection {
-  background: var(--yellow);
-  color: var(--navy-deep);
-}
+  .btn-quiet {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+  }
+  .btn-quiet:hover:not(:disabled) { background: var(--paper-deep); }
 
-/* ---------- controls ---------- */
+  /* Glass button for use on the gradient hero */
+  .btn-glass {
+    background: rgb(255 255 255 / 0.12);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
+    backdrop-filter: blur(6px);
+  }
+  .btn-glass:hover:not(:disabled) { background: rgb(255 255 255 / 0.22); }
 
-.btn {
-  display: inline-flex;
-  white-space: nowrap;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 10px;
-  padding: 0.62rem 1.1rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  background: var(--navy);
-  color: #fff;
-  transition: background-color 140ms ease, transform 140ms ease, opacity 140ms ease;
-}
-.btn:hover:not(:disabled) { background: var(--navy-deep); }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .field {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    padding: 0.6rem 0.8rem;
+    color: var(--ink);
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgb(0 112 224 / 0.15);
+  }
 
-/* PayPal yellow: reserved for the one main call to action on a screen */
-.btn-accent {
-  background: var(--yellow);
-  color: var(--navy-deep);
-}
-.btn-accent:hover:not(:disabled) { background: var(--yellow-deep); }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
 
-.btn-quiet {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
-}
-.btn-quiet:hover:not(:disabled) { background: var(--paper-deep); }
+  /* ---------- hero ---------- */
 
-/* Glass button for use on the gradient hero */
-.btn-glass {
-  background: rgb(255 255 255 / 0.12);
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
-  backdrop-filter: blur(6px);
-}
-.btn-glass:hover:not(:disabled) { background: rgb(255 255 255 / 0.22); }
+  /* PayPal navy fading through blue into the white page */
+  .hero-gradient {
+    background: linear-gradient(
+      180deg,
+      var(--navy-deep) 0%,
+      var(--navy) 26%,
+      var(--brand) 56%,
+      var(--sky) 80%,
+      var(--paper) 100%
+    );
+  }
 
-.field {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  padding: 0.6rem 0.8rem;
-  color: var(--ink);
-  transition: border-color 140ms ease, box-shadow 140ms ease;
-}
-.field:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgb(0 112 224 / 0.15);
-}
+  /* Tiled check marks, strongest at the top and fading out toward the page */
+  .hero-pattern {
+    background-image: url("/check-tile.svg");
+    background-size: 22px 22px;
+    -webkit-mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.55) 60%, transparent 100%);
+    mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.55) 60%, transparent 100%);
+  }
 
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-}
+  /* ---------- passport ---------- */
 
-/* ---------- hero ---------- */
-
-/* PayPal navy fading through blue into the white page */
-.hero-gradient {
-  background: linear-gradient(
-    180deg,
-    var(--navy-deep) 0%,
-    var(--navy) 26%,
-    var(--brand) 56%,
-    var(--sky) 80%,
-    var(--paper) 100%
-  );
-}
-
-/* Tiled check marks, strongest at the top and fading out toward the page */
-.hero-pattern {
-  background-image: url("/check-tile.svg");
-  background-size: 22px 22px;
-  -webkit-mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.55) 60%, transparent 100%);
-  mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.55) 60%, transparent 100%);
-}
-
-/* ---------- passport ---------- */
-
-.passport-card {
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgb(0 112 224 / 0.55), transparent 60%),
-    linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 70%);
-  color: #fff;
-}
-.passport-card .guilloche {
-  background-image: url("/guilloche.svg");
-  background-size: 260px;
-  opacity: 0.5;
+  .passport-card {
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgb(0 112 224 / 0.55), transparent 60%),
+      linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 70%);
+    color: #fff;
+  }
+  .passport-card .guilloche {
+    background-image: url("/guilloche.svg");
+    background-size: 260px;
+    opacity: 0.5;
+  }
 }
 
 @keyframes stamp-in {
