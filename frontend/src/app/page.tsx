@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { PixelField } from "@/components/landing/PixelField";
 import { Reveal } from "@/components/landing/Reveal";
 import { GridMark, ShowcaseNav } from "@/components/landing/ShowcaseNav";
+import "./landing.css";
 
 export const metadata: Metadata = {
   title: "ZK Pass: verify once, prove anywhere",
@@ -54,9 +55,16 @@ function Screen({ src, alt, w, h, label, crop = "h-[340px] sm:h-[460px]" }: {
         />
       </div>
       {label && (
-        <figcaption className="absolute bottom-3 left-3 flex items-center gap-2 rounded-[3px] bg-[#dfe3ff] px-3 py-1.5 font-serif text-[19px] text-[var(--lp-blue)] shadow-sm sm:bottom-4 sm:left-4">
-          <GridMark />
-          {label}
+        <figcaption className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4">
+          {/* The label opens that step of the app (signed-out visitors land on sign-in first). */}
+          <Link
+            href={`/${label.toLowerCase()}`}
+            className="flex items-center gap-2 rounded-[3px] bg-[#dfe3ff] px-3 py-1.5 font-serif text-[19px] text-[var(--lp-blue)] shadow-sm transition-colors hover:bg-[#cdd4ff]"
+          >
+            <GridMark />
+            {label}
+            <Arrow />
+          </Link>
         </figcaption>
       )}
     </Reveal>
