@@ -24,14 +24,14 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-[#0018f2] pt-24 md:pt-32 pb-72 md:pb-80 text-white">
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6 z-10">
           {/* Eyebrow tag matching Cotool */}
-          <span className="font-mono text-[13px] uppercase tracking-[0.14em] text-[#a9d5f5]">
+          <span className="font-mono text-[11px] sm:text-[13px] uppercase tracking-[0.14em] text-[#a9d5f5]">
             The Zero Knowledge Privacy Lab
           </span>
 
           {/* Main Editorial Headline with Cotool sky-blue contrasting highlight */}
-          <h1 className="font-sans text-[48px] sm:text-[56px] md:text-[66px] font-bold tracking-[-0.02em] text-white leading-[1.14]">
-            Verify once.{" "}
-            <span className="font-serif text-[#0018f2] bg-[#a9d5f5] leading-[86%] inline px-2.5 pb-2 md:mx-3 box-decoration-clone md:whitespace-nowrap font-bold">
+          <h1 className="font-sans text-[36px] sm:text-[54px] md:text-[66px] font-bold tracking-[-0.02em] text-white leading-[1.12]">
+            Verify once.<br className="sm:hidden" />{" "}
+            <span className="font-serif text-[#0018f2] bg-[#a9d5f5] leading-[86%] inline-block px-2.5 pb-1.5 mt-1 sm:mt-0 md:mx-3 box-decoration-clone md:whitespace-nowrap font-bold">
               Prove anywhere.
             </span>
           </h1>

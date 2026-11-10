@@ -39,16 +39,16 @@ export function LandingNav() {
         </div>
 
         {/* Right CTA */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link
             href="/login"
-            className="text-[13px] font-medium text-neutral-600 hover:text-neutral-950 transition"
+            className="hidden sm:inline text-[13px] font-medium text-neutral-600 hover:text-neutral-950 transition"
           >
             Sign in
           </Link>
           <Link
             href="/register"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#0808E8] px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0000CC]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#0018f2] px-3 sm:px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0000CC]"
           >
             <span>Explore demo</span>
             <span aria-hidden className="text-[11px]">→</span>
