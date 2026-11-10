@@ -286,7 +286,7 @@ NUL 3001…0070 < REV 1296…3023`}
         {/* ---------- capabilities ---------- */}
         <section aria-labelledby="cap-title" className="bg-[var(--lp-grey)] px-4 pb-16 sm:px-6">
           <div className="relative mx-auto max-w-[1320px] overflow-hidden bg-[var(--lp-charcoal)] px-5 pb-14 pt-20 text-white sm:px-10 lg:pt-24">
-            <div className="pointer-events-none absolute right-0 top-0 h-[260px] w-[340px] sm:w-[460px]">
+            <div className="pointer-events-none absolute right-0 top-0 h-[120px] w-[180px] sm:h-[260px] sm:w-[460px]">
               <PixelField variant="spray" gap={10} />
             </div>
             <Reveal className="relative mx-auto max-w-[620px] text-center">

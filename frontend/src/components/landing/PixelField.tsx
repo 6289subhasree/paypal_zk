@@ -39,17 +39,20 @@ function dot(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, col
 function drawWave({ ctx, w, h, t, gap }: Frame) {
   const r = gap * 0.36;
   const base = h * 0.66;
-  const crests = [0, 1, 2, 3].map((k) => {
-    const height = h * [0.5, 0.32, 0.58, 0.38][k];
+  // Narrow screens get fewer, lower crests so they don't turn into towers.
+  const scale = Math.min(1, w / 1000);
+  const count = w < 700 ? 2 : 4;
+  const crests = Array.from({ length: count }, (_, k) => {
+    const height = h * [0.5, 0.32, 0.58, 0.38][k] * (0.55 + 0.45 * scale);
     // Crests travel slowly to the right and wrap around.
-    const pos = ((((k + 0.15) / 4 + t * 0.012) % 1) * 1.3 - 0.15) * w;
+    const pos = ((((k + 0.15) / count + t * 0.012) % 1) * 1.3 - 0.15) * w;
     return { pos, height, R: height * 0.42 };
   });
   const surface = (x: number) => {
     let lift = Math.sin(x * 0.018 + t * 0.9) * gap * 0.6 + Math.sin(x * 0.007 - t * 0.4) * h * 0.04;
     for (const c of crests) {
       const d = x - c.pos;
-      const L = d < 0 ? w * 0.11 : w * 0.035; // long back slope, steep face
+      const L = d < 0 ? Math.max(w * 0.11, 110) : Math.max(w * 0.035, 34); // long back slope, steep face
       lift += c.height * Math.exp(-((d / L) ** 2));
     }
     return base - lift;
@@ -266,7 +269,9 @@ export function PixelField({
     const paint = (now: number) => {
       ctx.clearRect(0, 0, w, h);
       const t = reduce ? 2 : (now - start) / 1000;
-      DRAW[variant]({ ctx, w, h, t, gap, text, mask, maskW: w });
+      // The wordmark keeps roughly the same number of dot rows at any size.
+      const g = variant === "wordmark" ? Math.max(3.5, Math.min(gap, h / 26)) : gap;
+      DRAW[variant]({ ctx, w, h, t, gap: g, text, mask, maskW: w });
     };
 
     const loop = (now: number) => {
