@@ -40,6 +40,8 @@ HINTS = {
                            "create a United States Sandbox business account and an app linked to it.",
     "NOT_AUTHORIZED": "This Sandbox app isn't allowed to use this PayPal feature. Use an app linked to a "
                       "United States Sandbox business account.",
+    "PAYOUT_NOT_AVAILABLE": "PayPal doesn't allow this Sandbox business account's country to send Payouts. "
+                            "Create a United States Sandbox business account and an app linked to it.",
     "RECEIVER_UNREGISTERED": "That email isn't a PayPal Sandbox account. Use a Sandbox personal account's email.",
 }
 

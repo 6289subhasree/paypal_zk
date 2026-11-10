@@ -47,7 +47,8 @@ def _request(method: str, path: str, idempotency_key: str | None = None, json: d
         issue = details[0].get("issue") or body.get("name")
         message = body.get("message") or f"PayPal returned {r.status_code}"
         if issue:
-            message = f"{message} ({issue}: {details[0].get('description', '').strip()})"
+            detail = details[0].get("description", "").strip()
+            message = f"{message} ({issue}: {detail})" if detail else f"{message} ({issue})"
         raise PayPalError(message, r.status_code, body.get("debug_id"), issue)
     return r.json()
 
