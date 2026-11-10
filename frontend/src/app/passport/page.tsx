@@ -114,7 +114,7 @@ function Passport() {
                     <li>When the payment asks for it, the birth date is at least the minimum age before today.</li>
                   </ul>
                   <p className="mt-4 font-mono text-[11px] text-ink-soft">The 9 public signals a verifier receives</p>
-                  <dl className="mt-2 grid gap-x-4 gap-y-1.5 font-mono text-[12px] sm:grid-cols-2">
+                  <dl className="mt-2 grid gap-1.5 font-mono text-[12px]">
                     {[
                       ["nullifier", "one-time, per payment"],
                       ["revocation_tag", "scoped to this verifier"],
