@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { Logo } from "./Logo";
 import { ErrorNote } from "./ui";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
@@ -29,10 +30,17 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   }
 
   return (
-    <div className="grid min-h-dvh place-items-center px-4 py-10">
-      <form onSubmit={onSubmit} className="panel w-full max-w-md space-y-5 p-8">
-        <Link href="/" className="font-display text-xl font-extrabold">ZK Pass</Link>
-        <h1 className="text-3xl font-bold">{mode === "login" ? "Sign in" : "Create your account"}</h1>
+    <div className="hero-gradient relative grid min-h-dvh place-items-center px-4 py-10">
+      <div className="hero-pattern pointer-events-none absolute inset-0" aria-hidden />
+      <form
+        onSubmit={onSubmit}
+        className="relative w-full max-w-md space-y-5 rounded-2xl bg-surface p-8 shadow-[0_30px_80px_-30px_rgba(0,28,100,0.6)]"
+      >
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <Logo dark />
+          ZK Pass
+        </Link>
+        <h1 className="text-3xl font-semibold">{mode === "login" ? "Sign in" : "Create your account"}</h1>
         {mode === "register" && (
           <label className="block">
             <span className="mb-1 block font-medium">Display name</span>
@@ -56,7 +64,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           {mode === "register" && <span className="mt-1 block text-sm text-ink-soft">At least 8 characters.</span>}
         </label>
         <ErrorNote>{error}</ErrorNote>
-        <button className="btn w-full justify-center" disabled={busy}>
+        <button className="btn w-full justify-center py-3" disabled={busy}>
           {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
         </button>
         <p className="text-sm text-ink-soft">
