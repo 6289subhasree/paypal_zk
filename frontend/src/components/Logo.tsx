@@ -1,16 +1,11 @@
-/** ZK Pass mark: a check in PayPal yellow (or navy on light backgrounds). */
-export function Logo({ dark = false, className = "h-5 w-5" }: { dark?: boolean; className?: string }) {
+/** ZK Pass mark: a check in a rounded square, electric blue (or white on dark backgrounds). */
+export function Logo({ dark = true, className = "h-5 w-5" }: { dark?: boolean; className?: string }) {
+  const bg = dark ? "var(--primary)" : "#fff";
+  const fg = dark ? "#fff" : "var(--primary)";
   return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden>
-      <circle cx="10" cy="10" r="10" fill={dark ? "var(--navy)" : "var(--yellow)"} />
-      <path
-        d="M5.8 10.3l2.7 2.7 5.6-5.9"
-        fill="none"
-        stroke={dark ? "#fff" : "var(--navy-deep)"}
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg viewBox="0 0 16 16" className={className} aria-hidden>
+      <rect x="0.5" y="0.5" width="15" height="15" rx="3.5" fill={bg} />
+      <path d="M4.3 8.2l2.4 2.4 5-5.2" fill="none" stroke={fg} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
