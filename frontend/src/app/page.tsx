@@ -21,27 +21,32 @@ export default function LandingPage() {
       <LandingNav />
 
       {/* 2. Hero Section - Electric Blue with exact Cotool animated wave flowing left-to-right */}
-      <section className="relative overflow-hidden bg-[#0018f2] pt-20 sm:pt-28 text-white">
-        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6 z-10">
+      <section className="relative overflow-hidden bg-[#0018f2] pt-24 md:pt-32 pb-72 md:pb-80 text-white">
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6 z-10">
+          {/* Eyebrow tag matching Cotool */}
+          <span className="font-mono text-[13px] uppercase tracking-[0.14em] text-[#a9d5f5]">
+            The Zero Knowledge Privacy Lab
+          </span>
+
           {/* Main Editorial Headline with Cotool sky-blue contrasting highlight */}
-          <h1 className="font-sans text-[clamp(2.75rem,6.8vw,5.5rem)] font-bold tracking-tight text-white leading-[1.12]">
+          <h1 className="font-sans text-[48px] sm:text-[56px] md:text-[66px] font-bold tracking-[-0.02em] text-white leading-[1.14]">
             Verify once.{" "}
-            <span className="font-serif text-[#0018f2] bg-[#a9d5f5] leading-[88%] inline px-2.5 pb-1 md:mx-2 box-decoration-clone md:whitespace-nowrap font-bold">
+            <span className="font-serif text-[#0018f2] bg-[#a9d5f5] leading-[86%] inline px-2.5 pb-2 md:mx-3 box-decoration-clone md:whitespace-nowrap font-bold">
               Prove anywhere.
             </span>
           </h1>
 
           {/* Supporting line */}
-          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-white/90">
+          <p className="max-w-xl text-base sm:text-lg font-normal leading-[135%] text-white/90">
             Your identity stays yours. Prove what matters, authorize payments, and keep sensitive
             information private.
           </p>
 
           {/* Compact CTA Buttons */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-[7px] bg-white px-5 py-2.5 text-sm font-semibold text-[#0018f2] shadow-sm transition hover:bg-[#a9d5f5]"
+              className="inline-flex h-9.5 items-center gap-2.5 rounded-[7.13px] bg-white px-4 text-sm font-semibold text-[#0018f2] shadow-sm transition hover:bg-[#a9d5f5]"
             >
               <span>Explore the demo</span>
               <svg width="11" height="10" viewBox="0 0 11 10" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,17 +55,15 @@ export default function LandingPage() {
             </Link>
             <a
               href="#overview"
-              className="inline-flex items-center gap-2 rounded-[7px] border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
+              className="inline-flex h-9.5 items-center gap-2 rounded-[7.13px] border border-white/30 bg-white/10 px-4 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
             >
               How it works
             </a>
           </div>
         </div>
 
-        {/* Exact Cotool Japanese woodblock pixel wave flowing left-to-right */}
-        <div className="mt-8 sm:mt-12 w-full">
-          <HeroWave className="w-full" />
-        </div>
+        {/* Exact Cotool Japanese woodblock pixel wave flowing left-to-right at authentic scale */}
+        <HeroWave />
       </section>
 
       {/* 3. Technology / Protocol Bar */}

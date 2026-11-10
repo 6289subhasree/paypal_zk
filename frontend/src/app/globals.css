@@ -152,22 +152,22 @@
   }
 }
 
-/* Left-to-right flowing wave animation */
-@keyframes waveFlowLtr {
+/* Left-to-right flowing wave animation matching Cotool scale */
+@keyframes waveFlowLtrExact {
   0% {
-    transform: translate3d(-33.333333%, 0, 0);
+    transform: translate3d(-2030px, 0, 0);
   }
   100% {
     transform: translate3d(0, 0, 0);
   }
 }
 
-.animate-wave-ltr {
-  animation: waveFlowLtr 32s linear infinite;
+.animate-wave-flow-ltr {
+  animation: waveFlowLtrExact 32s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-wave-ltr {
+  .animate-wave-flow-ltr {
     animation: none;
   }
 }
