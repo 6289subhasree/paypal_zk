@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FeatureIcon } from "@/components/FeatureIcon";
 import { LandingPassport } from "@/components/LandingPassport";
+import { Logo } from "@/components/Logo";
 
 const FEATURES = [
   {
@@ -182,21 +183,5 @@ export default function Landing() {
         </div>
       </footer>
     </div>
-  );
-}
-
-function Logo({ dark = false }: { dark?: boolean }) {
-  return (
-    <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden>
-      <circle cx="10" cy="10" r="10" fill={dark ? "var(--navy)" : "var(--yellow)"} />
-      <path
-        d="M5.8 10.3l2.7 2.7 5.6-5.9"
-        fill="none"
-        stroke={dark ? "#fff" : "var(--navy-deep)"}
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
