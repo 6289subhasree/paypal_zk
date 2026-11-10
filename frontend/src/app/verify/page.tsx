@@ -252,7 +252,7 @@ function Assistant({ session, step, onReply }: { session: KycSession | null; ste
       <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4" aria-live="polite">
         {transcript.length === 0 && <p className="text-ink-soft">Start the session to chat with the assistant.</p>}
         {transcript.map((m, i) => (
-          <p key={i} className={`max-w-[90%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 ${m.role === "assistant" ? "bg-teal-soft" : "ml-auto bg-ink text-paper"}`}>
+          <p key={i} className={`max-w-[90%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 ${m.role === "assistant" ? "bg-brand-soft" : "ml-auto bg-ink text-paper"}`}>
             {m.content}
           </p>
         ))}

@@ -63,7 +63,7 @@ function Field({ label, value, private: isPrivate, tone }: { label: string; valu
     <div>
       <dt className="text-sm text-ink-soft">
         {label}
-        {isPrivate && <span className="ml-1.5 text-teal">(stays with you)</span>}
+        {isPrivate && <span className="ml-1.5 text-brand">(stays with you)</span>}
       </dt>
       <dd className={`font-semibold ${tone ? "capitalize" : ""} ${color}`}>{value}</dd>
     </div>

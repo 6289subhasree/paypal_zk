@@ -61,9 +61,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         </button>
         <p className="text-sm text-ink-soft">
           {mode === "login" ? (
-            <>New here? <Link className="font-semibold text-teal underline" href="/register">Create an account</Link></>
+            <>New here? <Link className="font-semibold text-brand underline" href="/register">Create an account</Link></>
           ) : (
-            <>Have an account? <Link className="font-semibold text-teal underline" href="/login">Sign in</Link></>
+            <>Have an account? <Link className="font-semibold text-brand underline" href="/login">Sign in</Link></>
           )}
         </p>
         {mode === "login" && (

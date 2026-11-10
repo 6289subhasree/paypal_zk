@@ -41,7 +41,7 @@ export default function Landing() {
           ].map(([title, body], i) => (
             <div key={title}>
               <h2 className="text-2xl font-bold">
-                <span className="mr-2 text-teal">{i + 1}</span>
+                <span className="mr-2 text-brand">{i + 1}</span>
                 {title}
               </h2>
               <p className="mt-2 text-ink-soft">{body}</p>

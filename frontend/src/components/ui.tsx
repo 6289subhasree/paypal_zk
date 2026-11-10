@@ -4,7 +4,7 @@ import Link from "next/link";
 export function Badge({ tone, children }: { tone: "sim" | "sandbox" | "ok" | "bad" | "neutral"; children: React.ReactNode }) {
   const styles = {
     sim: "bg-sim-soft text-sim",
-    sandbox: "bg-teal-soft text-teal",
+    sandbox: "bg-brand-soft text-brand",
     ok: "bg-approve-soft text-approve",
     bad: "bg-reject-soft text-reject",
     neutral: "bg-paper-deep text-ink-soft",
