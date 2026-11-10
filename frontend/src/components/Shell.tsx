@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
+import { Logo } from "./Logo";
 
 const STEPS = [
   { href: "/verify", label: "Verify", hint: "AI-guided identity check" },
@@ -25,29 +26,41 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh">
-      <div className="bg-sim-soft px-4 py-1.5 text-center text-sm text-sim">
-        Demo environment: test identity data only, payments run in PayPal Sandbox. Independent prototype, not a PayPal product.
-      </div>
-      <header className="border-b border-line">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
-          <Link href="/dashboard" className="font-display text-2xl font-extrabold tracking-tight">
+      <header className="sticky top-0 z-20 bg-navy-deep text-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <Logo />
             ZK Pass
+            <span className="ml-1 hidden rounded-full bg-yellow px-2 py-0.5 text-[11px] font-semibold text-navy-deep sm:inline">
+              Sandbox
+            </span>
           </Link>
-          <nav className="flex items-center gap-1 text-[15px]" aria-label="Account">
-            <Link href="/payouts" className="rounded-full px-3 py-1.5 hover:bg-paper-deep">Payouts</Link>
-            <Link href="/history" className="rounded-full px-3 py-1.5 hover:bg-paper-deep">History</Link>
-            {user.role === "reviewer" && (
-              <Link href="/review" className="rounded-full px-3 py-1.5 hover:bg-paper-deep">Review queue</Link>
-            )}
-            <span className="hidden px-3 text-ink-soft sm:inline">{user.display_name}</span>
-            <button onClick={() => { logout(); router.push("/"); }} className="btn btn-quiet py-1.5">
+          <nav className="flex items-center gap-0.5 text-sm font-medium" aria-label="Account">
+            {[
+              { href: "/payouts", label: "Payouts" },
+              { href: "/history", label: "History" },
+              ...(user.role === "reviewer" ? [{ href: "/review", label: "Review" }] : []),
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`rounded-lg px-2.5 py-1.5 sm:px-3 ${path.startsWith(l.href) ? "bg-white/15 text-white" : "text-white/75 hover:bg-white/10 hover:text-white"}`}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <span className="hidden px-3 text-white/60 md:inline">{user.display_name}</span>
+            <button onClick={() => { logout(); router.push("/"); }} className="btn btn-glass ml-1 px-3 py-1.5 text-sm">
               Sign out
             </button>
           </nav>
         </div>
       </header>
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 lg:grid-cols-[220px_1fr]">
-        <nav aria-label="Steps" className="lg:sticky lg:top-6 lg:self-start">
+      <p className="border-b border-line bg-paper-deep px-4 py-1.5 text-center text-[13px] text-ink-soft">
+        Test identity data only. Payments run in PayPal Sandbox. Independent prototype, not a PayPal product.
+      </p>
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[210px_1fr]">
+        <nav aria-label="Steps" className="lg:sticky lg:top-24 lg:self-start">
           <ol className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-1">
             {STEPS.map((s, i) => {
               const active = path === s.href || path.startsWith(`${s.href}/`);
@@ -56,14 +69,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   <Link
                     href={s.href}
                     aria-current={active ? "step" : undefined}
-                    className={`flex items-start gap-3 rounded-2xl px-3 py-2.5 ${active ? "bg-ink text-paper" : "hover:bg-paper-deep"}`}
+                    className={`flex items-start gap-3 rounded-xl px-3 py-2.5 ${active ? "bg-navy text-white" : "hover:bg-paper-deep"}`}
                   >
-                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-display font-bold ${active ? "bg-paper text-ink" : "bg-paper-deep"}`}>
+                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-semibold ${active ? "bg-yellow text-navy-deep" : "bg-paper-deep text-ink-soft ring-1 ring-line"}`}>
                       {i + 1}
                     </span>
                     <span>
                       <span className="block font-semibold">{s.label}</span>
-                      <span className={`hidden text-sm lg:block ${active ? "text-paper/75" : "text-ink-soft"}`}>{s.hint}</span>
+                      <span className={`hidden text-sm lg:block ${active ? "text-white/70" : "text-ink-soft"}`}>{s.hint}</span>
                     </span>
                   </Link>
                 </li>
