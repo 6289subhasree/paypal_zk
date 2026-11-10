@@ -50,7 +50,7 @@ function Payouts() {
       />
       <ErrorNote>{error}</ErrorNote>
       <form onSubmit={create} className="panel mt-4 max-w-xl space-y-4 p-6">
-        <h2 className="text-2xl font-bold">Send a payout</h2>
+        <h2 className="text-2xl font-semibold">Send a payout</h2>
         <label className="block">
           <span className="mb-1 block font-medium">Amount (USD)</span>
           <input name="amount" type="number" min="0.01" max="5000" step="0.01" defaultValue="25.00" required className="field" />
@@ -68,7 +68,7 @@ function Payouts() {
 
       {mine.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 text-2xl font-bold">Your payouts</h2>
+          <h2 className="mb-3 text-2xl font-semibold">Your payouts</h2>
           <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
             {mine.map((p) => (
               <li key={p.id}>

@@ -64,25 +64,25 @@ function Passport() {
           ) : !active ? (
             approved ? (
               <>
-                <h2 className="text-2xl font-bold">Issue your Passport</h2>
+                <h2 className="text-2xl font-semibold">Issue your Passport</h2>
                 <p className="text-ink-soft">
                   Your browser creates a random holder secret and sends only its Poseidon hash. The issuer signs that
                   hash together with your KYC claim and an expiry date.
                 </p>
-                <button className="btn" onClick={issue} disabled={busy}>
+                <button className="btn btn-accent" onClick={issue} disabled={busy}>
                   {busy ? <Spinner label="Issuing" /> : "Issue Passport"}
                 </button>
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-bold">Not issued yet</h2>
+                <h2 className="text-2xl font-semibold">Not issued yet</h2>
                 <p className="text-ink-soft">A Passport can only be issued after a reviewer approves your verification.</p>
                 <Link href="/verify" className="btn">Go to verification</Link>
               </>
             )
           ) : (
             <>
-              <h2 className="text-2xl font-bold">Ready to prove</h2>
+              <h2 className="text-2xl font-semibold">Ready to prove</h2>
               <p className="text-ink-soft">
                 For each payment, your browser generates a Groth16 proof that this credential is signed, approved,
                 unexpired and yours, tied to that one payment request. The verifier receives the proof and the

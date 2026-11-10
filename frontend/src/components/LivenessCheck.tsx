@@ -184,7 +184,7 @@ export function LivenessCheck({ busy, onDone }: { busy: string; onDone: (r: Live
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-2xl font-bold">Liveness</h2>
+        <h2 className="text-2xl font-semibold">Liveness</h2>
         <Badge tone="neutral">Runs on your device</Badge>
       </div>
       <p className="text-ink-soft">
@@ -210,7 +210,7 @@ export function LivenessCheck({ busy, onDone }: { busy: string; onDone: (r: Live
         )}
         {phase === "passed" && (
           <div className="absolute inset-0 grid place-items-center bg-ink/60 text-paper">
-            <span className="font-display text-2xl font-bold">Liveness passed</span>
+            <span className="font-display text-2xl font-semibold">Liveness passed</span>
           </div>
         )}
       </div>

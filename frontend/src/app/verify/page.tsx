@@ -127,7 +127,7 @@ function Consent({ busy, onStart }: { busy: string; onStart: () => void }) {
   const [agree, setAgree] = useState(false);
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Before you start</h2>
+      <h2 className="text-2xl font-semibold">Before you start</h2>
       <ul className="list-disc space-y-1 pl-5 text-ink-soft">
         <li>Use one of the SPECIMEN test cards from the repo&apos;s <code>samples/</code> folder, never a real ID.</li>
         <li>The image is read in memory and discarded. Only masked fields and check results are kept.</li>
@@ -138,7 +138,7 @@ function Consent({ busy, onStart }: { busy: string; onStart: () => void }) {
         <input type="checkbox" className="mt-1.5 h-4 w-4" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
         <span>I agree to a demo verification using test data only.</span>
       </label>
-      <button className="btn" disabled={!agree || !!busy} onClick={onStart}>
+      <button className="btn btn-accent" disabled={!agree || !!busy} onClick={onStart}>
         {busy ? <Spinner label={busy} /> : "Start verification"}
       </button>
     </div>
@@ -152,7 +152,7 @@ function Details({ session, busy, onSave }: { session: KycSession; busy: string;
       const f = new FormData(e.currentTarget);
       onSave(String(f.get("name")), String(f.get("dob")));
     }}>
-      <h2 className="text-2xl font-bold">Your details</h2>
+      <h2 className="text-2xl font-semibold">Your details</h2>
       <p className="text-ink-soft">Enter them exactly as printed on the test document.</p>
       <label className="block">
         <span className="mb-1 block font-medium">Full name</span>
@@ -172,7 +172,7 @@ function DocumentStep({ session, busy, onUpload, onNext }: { session: KycSession
   const read = "ocr_chars" in ex;
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Upload the test document</h2>
+      <h2 className="text-2xl font-semibold">Upload the test document</h2>
       <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-line p-6 text-center hover:bg-paper-deep focus-within:ring-2">
         <span className="btn pointer-events-none inline-flex">Choose file</span>
         <span className="mt-3 block font-semibold">PNG, JPEG or WebP</span>
@@ -208,7 +208,7 @@ function Result({ session, onRestart }: { session: KycSession; onRestart: () => 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-2xl font-bold">Verification result</h2>
+        <h2 className="text-2xl font-semibold">Verification result</h2>
         <Badge tone={tone}>{session.status.replace("_", " ")}</Badge>
       </div>
       <ChecksList checks={session.checks} />
@@ -246,7 +246,7 @@ function Assistant({ session, step, onReply }: { session: KycSession | null; ste
   return (
     <aside className="panel flex max-h-[640px] flex-col" aria-label="Verification assistant">
       <div className="border-b border-line px-5 py-3">
-        <h2 className="font-display text-lg font-bold">Assistant</h2>
+        <h2 className="font-display text-lg font-semibold">Assistant</h2>
         <p className="text-sm text-ink-soft">{session?.ai_provider ?? "Starts when you begin a session"}. It guides and explains; it can&apos;t approve you.</p>
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4" aria-live="polite">

@@ -38,24 +38,24 @@ function Dashboard() {
   return (
     <>
       <PageTitle title={`Hello, ${user?.display_name}`} lead={next.text} />
-      <Link href={next.href} className="btn">{next.label}</Link>
+      <Link href={next.href} className="btn btn-accent">{next.label}</Link>
 
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <section className="panel p-5">
-          <h2 className="text-lg font-bold">Verification</h2>
+          <h2 className="text-lg font-semibold">Verification</h2>
           <p className="mt-2">
             {kyc === undefined ? "…" : <Badge tone={kycTone}>{kyc ? kyc.status.replace("_", " ") : "not started"}</Badge>}
           </p>
         </section>
         <section className="panel p-5">
-          <h2 className="text-lg font-bold">Passport</h2>
+          <h2 className="text-lg font-semibold">Passport</h2>
           <p className="mt-2">
             <Badge tone={active ? "ok" : "neutral"}>{active ? "active" : "not issued"}</Badge>
           </p>
           {active && <p className="mt-2 text-sm text-ink-soft">Expires {new Date(active.expires_at).toLocaleDateString()}</p>}
         </section>
         <section className="panel p-5">
-          <h2 className="text-lg font-bold">Recent payments</h2>
+          <h2 className="text-lg font-semibold">Recent payments</h2>
           {history.length === 0 ? (
             <p className="mt-2 text-ink-soft">No payments yet.</p>
           ) : (

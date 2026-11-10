@@ -107,7 +107,7 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-ink-soft">{isRecipient ? "You requested" : `${req.recipient.display_name} requests`}</p>
-          <h1 className="font-display text-5xl font-extrabold">
+          <h1 className="text-5xl font-semibold tracking-[-0.04em]">
             {req.currency} {req.amount}
           </h1>
           {req.description && <p className="mt-1 text-lg">{req.description}</p>}
@@ -141,21 +141,21 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
             ) : !unlocked ? (
               <>
                 <div>
-                  <h2 className="text-2xl font-bold">Checkout is locked</h2>
+                  <h2 className="text-2xl font-semibold">Checkout is locked</h2>
                   <p className="mt-1 text-ink-soft">
                     {req.min_age > 0 && <>This merchant also needs proof that you&apos;re {req.min_age} or older. </>}
                     Prove you hold a valid, approved credential for this payment. The proof is generated here and
                     never includes your name, documents or credential ID.
                   </p>
                 </div>
-                <button className="btn" disabled={!!busy || req.status !== "open"} onClick={() => attempt("valid")}>
+                <button className="btn btn-accent" disabled={!!busy || req.status !== "open"} onClick={() => attempt("valid")}>
                   {busy ? <Spinner label={busy} /> : "Generate proof and unlock"}
                 </button>
               </>
             ) : (
               <>
                 <div>
-                  <h2 className="text-2xl font-bold">Checkout unlocked</h2>
+                  <h2 className="text-2xl font-semibold">Checkout unlocked</h2>
                   <p className="mt-1 text-ink-soft">Your proof was verified for this payment. Pay with a PayPal Sandbox buyer account.</p>
                 </div>
                 <Checkout
@@ -194,7 +194,7 @@ export function PaymentFlow({ requestId }: { requestId: string }) {
 
             {canProve && (
               <section className="rounded-2xl border border-dashed border-line p-4">
-                <h3 className="font-display text-lg font-bold">Try to break it</h3>
+                <h3 className="font-display text-lg font-semibold">Try to break it</h3>
                 <p className="mb-3 text-sm text-ink-soft">Each of these sends a bad proof to the same verifier.</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {ATTEMPTS.map((a) => (
@@ -240,7 +240,7 @@ function RecipientView({
   }
   return (
     <section className="panel max-w-2xl space-y-4 p-6">
-      <h2 className="text-2xl font-bold">Share this request</h2>
+      <h2 className="text-2xl font-semibold">Share this request</h2>
       <p className="text-ink-soft">Send the link to the payer. You&apos;ll receive the payment after their proof unlocks checkout.</p>
       <div className="flex flex-wrap gap-2">
         <input readOnly value={link} className="field font-mono text-sm" aria-label="Payment link" />
@@ -393,7 +393,7 @@ function Receipt({ tx }: { tx: Transaction }) {
   return (
     <section className="panel max-w-2xl overflow-hidden">
       <div className={`flex items-center justify-between gap-3 px-6 py-4 ${refunded ? "bg-paper-deep" : "bg-approve-soft"}`}>
-        <h2 className={`text-2xl font-bold ${refunded ? "" : "text-approve"}`}>{refunded ? "Payment refunded" : "Payment captured"}</h2>
+        <h2 className={`text-2xl font-semibold ${refunded ? "" : "text-approve"}`}>{refunded ? "Payment refunded" : "Payment captured"}</h2>
         <Badge tone="sandbox">Sandbox test transaction</Badge>
       </div>
       <dl className="grid gap-3 px-6 py-5 sm:grid-cols-2">

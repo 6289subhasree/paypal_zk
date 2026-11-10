@@ -56,7 +56,7 @@ function Pay() {
       <ErrorNote>{error}</ErrorNote>
       <div className="mt-4 grid gap-6 md:grid-cols-2">
         <form onSubmit={create} className="panel space-y-4 p-6">
-          <h2 className="text-2xl font-bold">Request a payment</h2>
+          <h2 className="text-2xl font-semibold">Request a payment</h2>
           <p className="text-ink-soft">Use the merchant account, then share the link with the payer.</p>
           <label className="block">
             <span className="mb-1 block font-medium">Amount (USD)</span>
@@ -77,7 +77,7 @@ function Pay() {
         </form>
 
         <form onSubmit={open} className="panel space-y-4 p-6">
-          <h2 className="text-2xl font-bold">Pay a request</h2>
+          <h2 className="text-2xl font-semibold">Pay a request</h2>
           <p className="text-ink-soft">Paste the link or request ID you received.</p>
           <label className="block">
             <span className="mb-1 block font-medium">Payment link or ID</span>
@@ -89,7 +89,7 @@ function Pay() {
 
       {mine.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 text-2xl font-bold">Your requests and payments</h2>
+          <h2 className="mb-3 text-2xl font-semibold">Your requests and payments</h2>
           <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
             {mine.map((r) => (
               <li key={r.id}>

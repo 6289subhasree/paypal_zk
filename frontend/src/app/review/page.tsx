@@ -58,7 +58,7 @@ function Review() {
             return (
               <li key={s.id} className="panel p-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <h2 className="text-2xl font-bold">{s.user.display_name}</h2>
+                  <h2 className="text-2xl font-semibold">{s.user.display_name}</h2>
                   <span className="text-ink-soft">{s.user.email}, submitted {s.completed_at ? new Date(s.completed_at).toLocaleString() : ""}</span>
                 </div>
                 <p className="mt-2">
@@ -67,7 +67,7 @@ function Review() {
                 <div className="mt-5 grid gap-6 lg:grid-cols-2">
                   <ChecksList checks={s.checks} />
                   <div>
-                    <h3 className="font-display text-lg font-bold">Evidence summary</h3>
+                    <h3 className="font-display text-lg font-semibold">Evidence summary</h3>
                     <p className="text-sm text-ink-soft">Written by {s.ai_provider}. It describes the evidence and doesn&apos;t recommend a decision.</p>
                     <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-paper-deep p-4 text-[15px]">{s.ai_summary}</p>
                     <dl className="mt-3 text-sm">

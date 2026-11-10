@@ -17,7 +17,7 @@ export function Stamp({ kind, children }: { kind: "accepted" | "rejected"; child
   return (
     <div
       role="status"
-      className={`stamp inline-block rounded-lg border-[3px] bg-white/90 px-4 py-2 font-display text-2xl font-bold tracking-tight ${color}`}
+      className={`stamp inline-block rounded-lg border-[3px] bg-white/90 px-4 py-2 font-display text-2xl font-semibold tracking-tight ${color}`}
       style={{ boxShadow: "inset 0 0 0 2px currentColor" }}
     >
       {children}

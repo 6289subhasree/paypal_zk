@@ -85,7 +85,7 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-ink-soft">{isSender ? "You're paying out" : `${payout.sender.display_name} is paying you`}</p>
-          <h1 className="font-display text-5xl font-extrabold">
+          <h1 className="text-5xl font-semibold tracking-[-0.04em]">
             {payout.currency} {payout.amount}
           </h1>
           {payout.note && <p className="mt-1 text-lg">{payout.note}</p>}
@@ -102,7 +102,7 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
       {sent ? (
         <section className="panel max-w-2xl overflow-hidden">
           <div className="flex items-center justify-between gap-3 bg-approve-soft px-6 py-4">
-            <h2 className="text-2xl font-bold text-approve">Payout sent</h2>
+            <h2 className="text-2xl font-semibold text-approve">Payout sent</h2>
             <Badge tone="sandbox">Sandbox test payout</Badge>
           </div>
           <dl className="grid gap-3 px-6 py-5 sm:grid-cols-2">
@@ -149,7 +149,7 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
             ) : (
               <form onSubmit={claimPayout} className="space-y-4">
                 <div>
-                  <h2 className="text-2xl font-bold">Prove it&apos;s you, then get paid</h2>
+                  <h2 className="text-2xl font-semibold">Prove it&apos;s you, then get paid</h2>
                   <p className="mt-1 text-ink-soft">
                     {payout.min_age > 0 && <>The sender also needs proof that you&apos;re {payout.min_age} or older. </>}
                     Your browser proves you hold a valid, approved Passport for this payout. The sender never sees
@@ -168,7 +168,7 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
                   />
                   <span className="mt-1 block text-sm text-ink-soft">Use a PayPal Sandbox personal account&apos;s email.</span>
                 </label>
-                <button className="btn" disabled={!!busy}>
+                <button className="btn btn-accent" disabled={!!busy}>
                   {busy ? <Spinner label={busy} /> : "Prove and receive payout"}
                 </button>
               </form>
@@ -203,7 +203,7 @@ function SenderView({ payout, onRefresh }: { payout: Payout; onRefresh: () => vo
   const link = typeof window !== "undefined" ? `${window.location.origin}/payouts/${payout.id}` : "";
   return (
     <section className="panel max-w-2xl space-y-4 p-6">
-      <h2 className="text-2xl font-bold">Share this payout</h2>
+      <h2 className="text-2xl font-semibold">Share this payout</h2>
       <p className="text-ink-soft">
         Send the link to the person you&apos;re paying. PayPal only sends the money after their Passport proof checks out.
       </p>
