@@ -27,26 +27,26 @@ function History() {
           <Link href="/pay" className="btn mt-3">Create a payment request</Link>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-          <table className="w-full min-w-[640px] text-left">
-            <thead className="border-b border-line text-sm text-ink-soft">
+        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+          <table className="w-full min-w-[640px] text-left text-[14px]">
+            <thead className="border-b border-line font-mono text-[11px] text-ink-soft">
               <tr>
-                <th className="px-4 py-3 font-medium">Amount</th>
-                <th className="px-4 py-3 font-medium">Role</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">PayPal capture</th>
-                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-normal">Amount</th>
+                <th className="px-4 py-3 font-normal">Role</th>
+                <th className="px-4 py-3 font-normal">Status</th>
+                <th className="px-4 py-3 font-normal">PayPal capture</th>
+                <th className="px-4 py-3 font-normal">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {items.map((i) => (
                 <tr key={i.id}>
-                  <td className="px-4 py-3 font-semibold">
-                    <Link href={`/pay/${i.id}`} className="underline">{i.currency} {i.amount}</Link>
+                  <td className="px-4 py-3 font-medium">
+                    <Link href={`/pay/${i.id}`} className="hover:text-primary">{i.currency} {i.amount}</Link>
                   </td>
                   <td className="px-4 py-3">{i.role === "payer" ? "Paid" : "Requested"}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={i.status === "paid" ? "ok" : i.status === "expired" ? "bad" : "neutral"}>{i.status}</Badge>
+                    <Badge tone={i.status === "paid" ? "ok" : i.status === "expired" || i.status === "refunded" ? "bad" : i.status === "authorized" ? "sandbox" : "neutral"}>{i.status.toUpperCase()}</Badge>
                   </td>
                   <td className="px-4 py-3 font-mono text-sm">
                     {i.transaction?.provider_capture_id ?? "—"}

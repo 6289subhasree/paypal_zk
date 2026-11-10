@@ -50,31 +50,31 @@ function Payouts() {
       />
       <ErrorNote>{error}</ErrorNote>
       <form onSubmit={create} className="panel mt-4 max-w-xl space-y-4 p-6">
-        <h2 className="text-2xl font-semibold">Send a payout</h2>
+        <h2 className="text-[28px]">Send a payout</h2>
         <label className="block">
-          <span className="mb-1 block font-medium">Amount (USD)</span>
+          <span className="label">Amount (USD)</span>
           <input name="amount" type="number" min="0.01" max="5000" step="0.01" defaultValue="25.00" required className="field" />
         </label>
         <label className="block">
-          <span className="mb-1 block font-medium">What it&apos;s for</span>
+          <span className="label">What it&apos;s for</span>
           <input name="note" maxLength={200} defaultValue="Logo design, milestone 1" className="field" />
         </label>
-        <label className="flex items-start gap-3">
-          <input type="checkbox" name="adults_only" className="mt-1.5 h-4 w-4" />
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line bg-paper-deep px-4 py-3">
+          <input type="checkbox" name="adults_only" className="switch mt-0.5" />
           <span className="font-medium">Recipient must be 18 or older</span>
         </label>
-        <button className="btn" disabled={busy}>{busy ? <Spinner label="Creating" /> : "Create payout link"}</button>
+        <button className="btn btn-accent" disabled={busy}>{busy ? <Spinner label="Creating" /> : "Create payout link"}</button>
       </form>
 
       {mine.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 text-2xl font-semibold">Your payouts</h2>
-          <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+          <h2 className="mb-3 text-[28px]">Your payouts</h2>
+          <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
             {mine.map((p) => (
               <li key={p.id}>
                 <Link href={`/payouts/${p.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 hover:bg-paper-deep">
                   <span>
-                    <span className="font-semibold">{p.currency} {p.amount}</span>
+                    <span className="font-medium">{p.currency} {p.amount}</span>
                     <span className="ml-2 text-ink-soft">{p.note || "No note"}</span>
                   </span>
                   <span className="flex items-center gap-2">

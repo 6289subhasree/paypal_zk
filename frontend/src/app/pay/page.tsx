@@ -56,51 +56,51 @@ function Pay() {
       <ErrorNote>{error}</ErrorNote>
       <div className="mt-4 grid gap-6 md:grid-cols-2">
         <form onSubmit={create} className="panel space-y-4 p-6">
-          <h2 className="text-2xl font-semibold">Request a payment</h2>
-          <p className="text-ink-soft">Use the merchant account, then share the link with the payer.</p>
+          <h2 className="text-[28px]">Request a payment</h2>
+          <p className="text-[15px] text-ink-soft">Use the merchant account, then share the link with the payer.</p>
           <label className="block">
-            <span className="mb-1 block font-medium">Amount (USD)</span>
+            <span className="label">Amount (USD)</span>
             <input name="amount" type="number" min="0.01" max="10000" step="0.01" defaultValue="10.00" required className="field" />
           </label>
           <label className="block">
-            <span className="mb-1 block font-medium">What it&apos;s for</span>
+            <span className="label">What it&apos;s for</span>
             <input name="description" maxLength={200} defaultValue="Design work, invoice #42" className="field" />
           </label>
-          <label className="flex items-start gap-3">
-            <input type="checkbox" name="adults_only" className="mt-1.5 h-4 w-4" />
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-line bg-paper-deep px-4 py-3">
+            <input type="checkbox" name="adults_only" className="switch mt-0.5" />
             <span>
               <span className="block font-medium">Buyer must be 18 or older</span>
-              <span className="block text-sm text-ink-soft">The payer proves their age without revealing their date of birth.</span>
+              <span className="block text-sm text-ink-soft">The payer&apos;s proof also shows they&apos;re 18+, checked inside the circuit. Their date of birth is never revealed.</span>
             </span>
           </label>
-          <button className="btn" disabled={busy}>{busy ? <Spinner label="Creating" /> : "Create payment request"}</button>
+          <button className="btn btn-accent" disabled={busy}>{busy ? <Spinner label="Creating" /> : "Create payment request"}</button>
         </form>
 
         <form onSubmit={open} className="panel space-y-4 p-6">
-          <h2 className="text-2xl font-semibold">Pay a request</h2>
-          <p className="text-ink-soft">Paste the link or request ID you received.</p>
+          <h2 className="text-[28px]">Pay a request</h2>
+          <p className="text-[15px] text-ink-soft">Paste the link or request ID you received.</p>
           <label className="block">
-            <span className="mb-1 block font-medium">Payment link or ID</span>
+            <span className="label">Payment link or ID</span>
             <input name="ref" required className="field" placeholder="http://localhost:3000/pay/…" />
           </label>
-          <button className="btn">Open request</button>
+          <button className="btn btn-quiet">Open request</button>
         </form>
       </div>
 
       {mine.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 text-2xl font-semibold">Your requests and payments</h2>
-          <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+          <h2 className="mb-3 text-[28px]">Your requests and payments</h2>
+          <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
             {mine.map((r) => (
               <li key={r.id}>
                 <Link href={`/pay/${r.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 hover:bg-paper-deep">
                   <span>
-                    <span className="font-semibold">{r.currency} {r.amount}</span>
+                    <span className="font-medium">{r.currency} {r.amount}</span>
                     <span className="ml-2 text-ink-soft">{r.description || "No description"}</span>
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-sm text-ink-soft">{r.role === "recipient" ? "You requested" : "You paid"}</span>
-                    <Badge tone={r.status === "paid" ? "ok" : r.status === "expired" ? "bad" : "neutral"}>{r.status}</Badge>
+                    <Badge tone={r.status === "paid" ? "ok" : r.status === "expired" || r.status === "refunded" ? "bad" : r.status === "authorized" ? "sandbox" : "neutral"}>{r.status.toUpperCase()}</Badge>
                   </span>
                 </Link>
               </li>

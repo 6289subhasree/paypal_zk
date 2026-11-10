@@ -47,7 +47,7 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
     setError("");
     setRejection(null);
     setAttempt((n) => n + 1);
-    setBusy("Generating proof in your browser");
+    setBusy("Compiling Groth16 witness and proof…");
     try {
       const bundle = await provePayment({ secret, material: cred.proof_material, request: payout });
       setProof(bundle);
@@ -84,8 +84,8 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-ink-soft">{isSender ? "You're paying out" : `${payout.sender.display_name} is paying you`}</p>
-          <h1 className="text-5xl font-semibold tracking-[-0.04em]">
+          <p className="font-mono text-[12px] text-ink-soft">{isSender ? "You're paying out" : `${payout.sender.display_name} is paying you`}</p>
+          <h1 className="font-sans text-[48px] font-semibold tracking-[-0.04em]">
             {payout.currency} {payout.amount}
           </h1>
           {payout.note && <p className="mt-1 text-lg">{payout.note}</p>}
@@ -115,8 +115,8 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
               ["Environment", payout.environment],
             ].map(([k, v]) => (
               <div key={k}>
-                <dt className="text-sm text-ink-soft">{k}</dt>
-                <dd className="break-all font-semibold">{v}</dd>
+                <dt className="font-mono text-[11px] text-ink-soft">{k}</dt>
+                <dd className="break-all font-medium">{v}</dd>
               </div>
             ))}
           </dl>
@@ -149,15 +149,15 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
             ) : (
               <form onSubmit={claimPayout} className="space-y-4">
                 <div>
-                  <h2 className="text-2xl font-semibold">Prove it&apos;s you, then get paid</h2>
-                  <p className="mt-1 text-ink-soft">
+                  <h2 className="text-[28px]">Prove it&apos;s you, then get paid</h2>
+                  <p className="mt-1 text-[15px] text-ink-soft">
                     {payout.min_age > 0 && <>The sender also needs proof that you&apos;re {payout.min_age} or older. </>}
                     Your browser proves you hold a valid, approved Passport for this payout. The sender never sees
                     your documents.
                   </p>
                 </div>
                 <label className="block">
-                  <span className="mb-1 block font-medium">PayPal email to receive the money</span>
+                  <span className="label">PayPal email to receive the money</span>
                   <input
                     name="email"
                     type="email"
@@ -174,17 +174,17 @@ export function PayoutFlow({ payoutId }: { payoutId: string }) {
               </form>
             )}
             {rejection && (
-              <p role="alert" className="rounded-xl bg-reject-soft px-4 py-3 text-reject">
-                <strong>{rejection.code.replace("_", " ")}:</strong> {rejection.reason} The payout wasn&apos;t sent.
+              <p role="alert" className="rounded-lg border border-[#f3c9c5] bg-reject-soft px-4 py-3 text-[15px] text-reject">
+                <strong className="font-mono text-[13px]">{rejection.code.replaceAll("_", " ")}:</strong> {rejection.reason} The payout wasn&apos;t sent.
               </p>
             )}
             {proof && (
-              <details className="rounded-2xl bg-paper-deep p-4">
-                <summary className="cursor-pointer font-semibold">What the sender&apos;s verifier received</summary>
-                <dl className="mt-3 grid gap-1 font-mono text-[13px]">
+              <details className="rounded-xl bg-charcoal p-4 text-white">
+                <summary className="cursor-pointer text-[14px] font-medium">What the sender&apos;s verifier received</summary>
+                <dl className="mt-3 grid gap-1 font-mono text-[12.5px]">
                   {labelSignals(proof.public_signals).map((s) => (
                     <div key={s.name} className="flex justify-between gap-4">
-                      <dt className="text-ink-soft">{s.name}</dt>
+                      <dt className="text-white/50">{s.name}</dt>
                       <dd className="truncate">{short(s.value, 10)}</dd>
                     </div>
                   ))}
@@ -203,7 +203,7 @@ function SenderView({ payout, onRefresh }: { payout: Payout; onRefresh: () => vo
   const link = typeof window !== "undefined" ? `${window.location.origin}/payouts/${payout.id}` : "";
   return (
     <section className="panel max-w-2xl space-y-4 p-6">
-      <h2 className="text-2xl font-semibold">Share this payout</h2>
+      <h2 className="text-[28px]">Share this payout</h2>
       <p className="text-ink-soft">
         Send the link to the person you&apos;re paying. PayPal only sends the money after their Passport proof checks out.
       </p>
