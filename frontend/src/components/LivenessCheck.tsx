@@ -184,65 +184,79 @@ export function LivenessCheck({ busy, onDone }: { busy: string; onDone: (r: Live
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-2xl font-semibold">Liveness</h2>
-        <Badge tone="neutral">Runs on your device</Badge>
+        <h2 className="text-[30px]">On-device liveness</h2>
+        <Badge tone="sandbox">Runs in your browser</Badge>
       </div>
-      <p className="text-ink-soft">
+      <p className="max-w-[62ch] text-[15px] text-ink-soft">
         Follow two quick prompts in front of your camera. Face tracking runs in this browser with MediaPipe: nothing is
         recorded or uploaded, only whether the prompts were completed. It isn&apos;t a certified liveness check.
       </p>
 
-      <div className="relative aspect-video overflow-hidden rounded-2xl bg-ink">
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-charcoal">
         <video ref={video} playsInline muted className="h-full w-full -scale-x-100 object-cover" />
+        {running && (
+          // Oval face guide; the rest of the frame is dimmed slightly.
+          <div className="pointer-events-none absolute inset-0 grid place-items-center" aria-hidden>
+            <div className="aspect-[3/4] h-[78%] rounded-[50%] border-2 border-dashed border-white/80 shadow-[0_0_0_9999px_rgb(0_0_0/0.28)]" />
+          </div>
+        )}
         {!running && phase !== "passed" && (
-          <div className="absolute inset-0 grid place-items-center p-4 text-center text-paper">
+          <div className="absolute inset-0 grid place-items-center p-4 text-center text-[15px] text-white/85">
             {phase === "unavailable"
               ? "Camera or face tracking isn't available here. You can use the simulated step instead."
               : phase === "failed"
                 ? hint
-                : "Camera is off."}
+                : "Camera is off. Start the check when you're ready."}
           </div>
         )}
         {phase === "loading" && (
-          <div className="absolute inset-0 grid place-items-center text-paper">
+          <div className="absolute inset-0 grid place-items-center text-white">
             <Spinner label="Starting camera and face tracking" />
           </div>
         )}
+        {phase === "running" && (
+          <div aria-live="polite" className="absolute inset-x-0 top-0 flex flex-wrap items-center justify-center gap-2 p-3">
+            {tasks.map((t, i) => (
+              <span
+                key={t}
+                className={`rounded-full px-3 py-1 text-[13px] font-medium ${
+                  i === current ? "bg-primary text-white" : i < current ? "bg-approve-soft text-approve" : "bg-white/85 text-ink-soft"
+                }`}
+              >
+                {i < current ? "✓ " : ""}
+                {TASK_TEXT[t]}
+                {t === "blink" && i === current && ` · ${blinks}/2`}
+                {t === "turn" && i === current && ` · ${Number(sides.a) + Number(sides.b)}/2 sides`}
+              </span>
+            ))}
+          </div>
+        )}
+        {phase === "running" && (
+          <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-0.5 font-mono text-[12px] text-white">
+            {Math.max(0, Math.ceil((TIME_LIMIT_MS - elapsed) / 1000))}s
+          </span>
+        )}
         {phase === "passed" && (
-          <div className="absolute inset-0 grid place-items-center bg-ink/60 text-paper">
-            <span className="font-display text-2xl font-semibold">Liveness passed</span>
+          <div className="absolute inset-0 grid place-items-center bg-black/55 text-white">
+            <span className="font-serif text-[30px]">Liveness passed</span>
           </div>
         )}
       </div>
 
-      {phase === "running" && (
-        <div aria-live="polite" className="space-y-2">
-          <ol className="space-y-1">
-            {tasks.map((t, i) => (
-              <li key={t} className={i === current ? "font-semibold" : i < current ? "text-approve" : "text-ink-soft"}>
-                {i < current ? "✓ " : `${i + 1}. `}
-                {TASK_TEXT[t]}
-                {t === "blink" && i === current && ` (${blinks}/2)`}
-                {t === "turn" && i === current && ` (${Number(sides.a) + Number(sides.b)}/2 sides)`}
-              </li>
-            ))}
-          </ol>
-          {hint && <p className="text-reject">{hint}</p>}
-          <p className="text-sm text-ink-soft">{Math.max(0, Math.ceil((TIME_LIMIT_MS - elapsed) / 1000))} s left</p>
-        </div>
-      )}
+      {phase === "running" && hint && <p className="text-[15px] text-reject" role="alert">{hint}</p>}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {(phase === "idle" || phase === "failed") && (
-          <button className="btn" onClick={start} disabled={!!busy}>
+          <button className="btn btn-accent" onClick={start} disabled={!!busy}>
             {phase === "failed" ? "Try again" : "Start liveness check"}
           </button>
         )}
         {phase === "passed" && busy && <Spinner label={busy} />}
-        {phase !== "passed" && (
+        {/* Hidden while the camera check runs, so it can't be clicked by accident mid-check. */}
+        {(phase === "idle" || phase === "failed" || phase === "unavailable") && (
           <button
             className="btn btn-quiet"
-            disabled={!!busy || phase === "loading"}
+            disabled={!!busy}
             onClick={() => {
               stop();
               onDone({ method: "simulated", challenges: [] });

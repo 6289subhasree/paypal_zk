@@ -64,26 +64,26 @@ function Passport() {
           ) : !active ? (
             approved ? (
               <>
-                <h2 className="text-2xl font-semibold">Issue your Passport</h2>
-                <p className="text-ink-soft">
+                <h2 className="text-[30px]">Issue your Passport</h2>
+                <p className="text-[15px] text-ink-soft">
                   Your browser creates a random holder secret and sends only its Poseidon hash. The issuer signs that
                   hash together with your KYC claim and an expiry date.
                 </p>
                 <button className="btn btn-accent" onClick={issue} disabled={busy}>
-                  {busy ? <Spinner label="Issuing" /> : "Issue Passport"}
+                  {busy ? <Spinner label="Issuing" /> : "Issue ZK Passport"}
                 </button>
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-semibold">Not issued yet</h2>
-                <p className="text-ink-soft">A Passport can only be issued after a reviewer approves your verification.</p>
+                <h2 className="text-[30px]">Not issued yet</h2>
+                <p className="text-[15px] text-ink-soft">A Passport can only be issued after a reviewer approves your verification.</p>
                 <Link href="/verify" className="btn">Go to verification</Link>
               </>
             )
           ) : (
             <>
-              <h2 className="text-2xl font-semibold">Ready to prove</h2>
-              <p className="text-ink-soft">
+              <h2 className="text-[30px]">Ready to prove</h2>
+              <p className="text-[15px] text-ink-soft">
                 For each payment, your browser generates a Groth16 proof that this credential is signed, approved,
                 unexpired and yours, tied to that one payment request. The verifier receives the proof and the
                 strip at the bottom of the passport, nothing else.
@@ -95,20 +95,43 @@ function Passport() {
                 </ErrorNote>
               )}
               <div className="flex flex-wrap gap-3">
-                <Link href="/pay" className="btn">Use it for a payment</Link>
+                <Link href="/pay" className="btn btn-accent">Use it for a payment</Link>
                 {!hasSecret && approved && (
                   <button className="btn btn-quiet" onClick={issue} disabled={busy}>Reissue for this browser</button>
                 )}
               </div>
-              <details className="rounded-2xl bg-paper-deep p-4">
-                <summary className="cursor-pointer font-semibold">What the circuit checks</summary>
-                <ul className="mt-3 list-disc space-y-1 pl-5 text-[15px] text-ink-soft">
-                  <li>The issuer&apos;s EdDSA signature over the credential (Poseidon hash).</li>
-                  <li>You know the secret behind the credential&apos;s holder commitment.</li>
-                  <li>The credential says <code>kyc_approved = 1</code>.</li>
-                  <li>The expiry date is later than the verifier&apos;s current time.</li>
-                  <li>It outputs a one-time nullifier for this payment and a revocation tag scoped to this verifier.</li>
-                </ul>
+              <details className="group rounded-xl border border-line bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-medium">
+                  What the circuit checks
+                  <span className="text-ink-soft transition-transform group-open:rotate-45" aria-hidden>+</span>
+                </summary>
+                <div className="border-t border-line px-4 py-4 text-[14px]">
+                  <ul className="list-disc space-y-1 pl-5 text-ink-soft marker:text-primary">
+                    <li>The issuer&apos;s EdDSA signature (BabyJubJub) over the credential&apos;s Poseidon hash.</li>
+                    <li>You know the secret behind the credential&apos;s holder commitment.</li>
+                    <li>The credential says <code className="font-mono text-[12px]">kyc_approved = 1</code>.</li>
+                    <li>The expiry date is later than the verifier&apos;s current time.</li>
+                    <li>When the payment asks for it, the birth date is at least the minimum age before today.</li>
+                  </ul>
+                  <p className="mt-4 font-mono text-[11px] text-ink-soft">The 9 public signals a verifier receives</p>
+                  <dl className="mt-2 grid gap-x-4 gap-y-1.5 font-mono text-[12px] sm:grid-cols-2">
+                    {[
+                      ["nullifier", "one-time, per payment"],
+                      ["revocation_tag", "scoped to this verifier"],
+                      ["issuer_ax, issuer_ay", "issuer public key"],
+                      ["now", "proof timestamp"],
+                      ["payment_challenge", "binds the proof to one payment"],
+                      ["verifier_id", "who may check it"],
+                      ["today", "date for the age check"],
+                      ["min_age", "0 or 18"],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex justify-between gap-3 rounded-md bg-paper-deep px-2.5 py-1.5">
+                        <dt>{k}</dt>
+                        <dd className="text-right text-ink-soft">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
               </details>
             </>
           )}

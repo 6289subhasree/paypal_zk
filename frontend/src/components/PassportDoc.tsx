@@ -1,6 +1,7 @@
 "use client";
 import type { Credential } from "@/lib/api";
 import { short } from "@/lib/zk";
+import { Logo } from "./Logo";
 
 /**
  * The ZK Passport as a navy security card. The upper part is what stays with the holder;
@@ -25,11 +26,11 @@ export function PassportDoc({
       <div className="guilloche pointer-events-none absolute inset-0" aria-hidden />
       <div className="relative px-6 pb-6 pt-5 sm:px-8">
         <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <CheckMark />
+          <span className="flex items-center gap-2 font-serif text-[22px]">
+            <Logo dark={false} className="h-4.5 w-4.5" />
             ZK Passport
           </span>
-          <span className="text-sm text-white/60">{credential?.credential_type ?? "KycApprovedCredential"}</span>
+          <span className="font-mono text-[11px] text-white/60">{credential?.credential_type ?? "KycApprovedCredential"}</span>
         </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
@@ -40,7 +41,7 @@ export function PassportDoc({
           <Field label="Issued" value={fmt(credential?.issued_at)} />
           <Field label="Expires" value={fmt(credential?.expires_at)} />
         </dl>
-        <p className="mt-5 text-sm text-white/65">
+        <p className="mt-5 text-[13px] text-white/65">
           Your name, documents and credential ID stay in this browser. A verifier only ever sees the line below.
         </p>
       </div>
@@ -65,20 +66,11 @@ function Field({ label, value, private: isPrivate, tone }: { label: string; valu
   const color = tone === "ok" ? "text-[#7ee2a8]" : tone === "bad" ? "text-[#ff9b94]" : "text-white";
   return (
     <div>
-      <dt className="text-sm text-white/55">
+      <dt className="font-mono text-[11px] text-white/55">
         {label}
-        {isPrivate && <span className="ml-1.5 text-yellow">(stays with you)</span>}
+        {isPrivate && <span className="ml-1.5 text-[#a9d5f5]">(stays in your browser)</span>}
       </dt>
       <dd className={`font-semibold ${tone ? "capitalize" : ""} ${color}`}>{value}</dd>
     </div>
-  );
-}
-
-function CheckMark() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden>
-      <circle cx="10" cy="10" r="10" fill="var(--yellow)" />
-      <path d="M5.8 10.3l2.7 2.7 5.6-5.9" fill="none" stroke="var(--navy-deep)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

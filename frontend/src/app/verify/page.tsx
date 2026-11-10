@@ -11,10 +11,10 @@ type Step = "welcome" | "details" | "document" | "liveness" | "submit";
 const ORDER: Step[] = ["welcome", "details", "document", "liveness", "submit"];
 const LABELS: Record<Step, string> = {
   welcome: "Consent",
-  details: "Your details",
+  details: "Identity details",
   document: "Test document",
-  liveness: "Liveness",
-  submit: "Submit",
+  liveness: "On-device liveness",
+  submit: "Submission",
 };
 
 function Verify() {
@@ -68,21 +68,28 @@ function Verify() {
         title="Verify your identity"
         lead="A guided check using a test document. The assistant explains each step; a human reviewer makes the decision."
       />
-      <ol className="mb-6 flex flex-wrap gap-2" aria-label="Verification progress">
+      <ol className="mb-6 flex flex-wrap items-center gap-1.5" aria-label="Verification progress">
         {ORDER.map((s, i) => {
           const done = ORDER.indexOf(step) > i || submitted;
+          const current = s === step && !submitted;
           return (
-            <li key={s}>
-              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm ${s === step ? "bg-ink text-paper" : done ? "bg-approve-soft text-approve" : "bg-paper-deep text-ink-soft"}`}>
-                {i + 1}. {LABELS[s]}
+            <li key={s} className="flex items-center gap-1.5" aria-current={current ? "step" : undefined}>
+              <span
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] ${
+                  current ? "bg-primary text-white" : done ? "bg-white text-approve ring-1 ring-line" : "bg-white/60 text-ink-soft ring-1 ring-line"
+                }`}
+              >
+                <span className="font-mono text-[11px] opacity-80">{done && !current ? "✓" : String(i + 1).padStart(2, "0")}</span>
+                {LABELS[s]}
               </span>
+              {i < ORDER.length - 1 && <span className="hidden h-px w-3 bg-line-strong sm:block" aria-hidden />}
             </li>
           );
         })}
       </ol>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
-        <section className="panel p-6">
+        <section className="panel p-6 sm:p-7">
           <ErrorNote>{error}</ErrorNote>
           <div className={error ? "mt-4" : ""}>
             {step === "welcome" && !session && (
@@ -127,15 +134,15 @@ function Consent({ busy, onStart }: { busy: string; onStart: () => void }) {
   const [agree, setAgree] = useState(false);
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">Before you start</h2>
-      <ul className="list-disc space-y-1 pl-5 text-ink-soft">
+      <h2 className="text-[30px]">Before you start</h2>
+      <ul className="list-disc space-y-1.5 pl-5 text-[15px] text-ink-soft marker:text-primary">
         <li>Use one of the SPECIMEN test cards from the repo&apos;s <code>samples/</code> folder, never a real ID.</li>
         <li>The image is read in memory and discarded. Only masked fields and check results are kept.</li>
         <li>A short liveness check runs in your browser with your camera. Nothing is recorded or uploaded, and it isn&apos;t a certified check.</li>
         <li>An AI assistant helps you, but a human reviewer approves or rejects the session.</li>
       </ul>
-      <label className="flex items-start gap-3">
-        <input type="checkbox" className="mt-1.5 h-4 w-4" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+      <label className="flex items-start gap-3 rounded-lg bg-paper-deep px-4 py-3">
+        <input type="checkbox" className="mt-1 h-4 w-4 accent-[var(--primary)]" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
         <span>I agree to a demo verification using test data only.</span>
       </label>
       <button className="btn btn-accent" disabled={!agree || !!busy} onClick={onStart}>
@@ -152,17 +159,17 @@ function Details({ session, busy, onSave }: { session: KycSession; busy: string;
       const f = new FormData(e.currentTarget);
       onSave(String(f.get("name")), String(f.get("dob")));
     }}>
-      <h2 className="text-2xl font-semibold">Your details</h2>
-      <p className="text-ink-soft">Enter them exactly as printed on the test document.</p>
+      <h2 className="text-[30px]">Identity details</h2>
+      <p className="text-[15px] text-ink-soft">Enter them exactly as printed on the test document.</p>
       <label className="block">
-        <span className="mb-1 block font-medium">Full name</span>
+        <span className="label">Full name</span>
         <input name="name" required className="field" defaultValue={session.declared?.full_name ?? "Asha Verma"} />
       </label>
       <label className="block">
-        <span className="mb-1 block font-medium">Date of birth</span>
+        <span className="label">Date of birth</span>
         <input name="dob" type="date" required className="field" defaultValue={session.declared?.date_of_birth ?? "1999-08-14"} />
       </label>
-      <button className="btn" disabled={!!busy}>{busy ? <Spinner label={busy} /> : "Save and continue"}</button>
+      <button className="btn btn-accent" disabled={!!busy}>{busy ? <Spinner label={busy} /> : "Save and continue"}</button>
     </form>
   );
 }
@@ -172,17 +179,20 @@ function DocumentStep({ session, busy, onUpload, onNext }: { session: KycSession
   const read = "ocr_chars" in ex;
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">Upload the test document</h2>
-      <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-line p-6 text-center hover:bg-paper-deep focus-within:ring-2">
+      <h2 className="text-[30px]">Upload the test document</h2>
+      <label className="block cursor-pointer rounded-xl border-2 border-dashed border-line-strong bg-paper-deep p-7 text-center transition-colors hover:border-primary hover:bg-brand-soft focus-within:ring-2 focus-within:ring-primary">
         <span className="btn pointer-events-none inline-flex">Choose file</span>
-        <span className="mt-3 block font-semibold">PNG, JPEG or WebP</span>
-        <span className="mt-1 block text-sm text-ink-soft">Try samples/specimen_pan_card.png, or mismatch_name_card.png to see failed checks.</span>
+        <span className="mt-3 block font-medium">PNG, JPEG or WebP · SPECIMEN test cards only</span>
+        <span className="mt-1 block text-sm text-ink-soft">
+          Use <code className="font-mono text-[12px]">samples/specimen_pan_card.png</code>, or{" "}
+          <code className="font-mono text-[12px]">mismatch_name_card.png</code> to see failed checks.
+        </span>
         <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
           onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
       </label>
       {busy && <Spinner label={busy} />}
       {read && (
-        <dl className="grid grid-cols-2 gap-3 rounded-2xl bg-paper-deep p-4 text-[15px]">
+        <dl className="reveal-in grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl bg-charcoal p-5 font-mono text-[13px] text-white" aria-label="Fields read from the document">
           {[
             ["Name read", ex.full_name],
             ["Date of birth", ex.date_of_birth],
@@ -192,13 +202,13 @@ function DocumentStep({ session, busy, onUpload, onNext }: { session: KycSession
             ["Extraction", ex.extraction_method],
           ].map(([k, v]) => (
             <div key={String(k)}>
-              <dt className="text-sm text-ink-soft">{String(k)}</dt>
-              <dd className="font-semibold">{v ? String(v) : "Not found"}</dd>
+              <dt className="text-[11px] text-white/50">{String(k)}</dt>
+              <dd className={v ? "text-white" : "text-[#ff9b94]"}>{v ? String(v) : "Not found"}</dd>
             </div>
           ))}
         </dl>
       )}
-      <button className="btn" disabled={!read || !!busy} onClick={onNext}>Continue to liveness</button>
+      <button className="btn btn-accent" disabled={!read || !!busy} onClick={onNext}>Continue to liveness</button>
     </div>
   );
 }
@@ -208,7 +218,7 @@ function Result({ session, onRestart }: { session: KycSession; onRestart: () => 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-2xl font-semibold">Verification result</h2>
+        <h2 className="text-[30px]">Verification result</h2>
         <Badge tone={tone}>{session.status.replace("_", " ")}</Badge>
       </div>
       <ChecksList checks={session.checks} />
@@ -244,25 +254,48 @@ function Assistant({ session, step, onReply }: { session: KycSession | null; ste
   }
 
   return (
-    <aside className="panel flex max-h-[640px] flex-col" aria-label="Verification assistant">
-      <div className="border-b border-line px-5 py-3">
-        <h2 className="font-display text-lg font-semibold">Assistant</h2>
-        <p className="text-sm text-ink-soft">{session?.ai_provider ?? "Starts when you begin a session"}. It guides and explains; it can&apos;t approve you.</p>
+    <aside className="flex max-h-[680px] flex-col overflow-hidden rounded-2xl bg-charcoal text-white" aria-label="Verification assistant">
+      <div className="border-b border-white/10 px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[22px]">Assistant</h2>
+          <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-mono text-[11px] text-white/75">{session?.ai_provider ?? "Starts with your session"}</span>
+        </div>
+        <p className="mt-2 rounded-md bg-white/5 px-2.5 py-1.5 text-[12px] text-white/70">
+          AI guides and extracts evidence; a human reviewer approves. It can&apos;t approve you.
+        </p>
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4" aria-live="polite">
-        {transcript.length === 0 && <p className="text-ink-soft">Start the session to chat with the assistant.</p>}
+        {transcript.length === 0 && <p className="text-[14px] text-white/60">Start the session to chat with the assistant.</p>}
         {transcript.map((m, i) => (
-          <p key={i} className={`max-w-[90%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 ${m.role === "assistant" ? "bg-brand-soft" : "ml-auto bg-ink text-paper"}`}>
+          <p
+            key={i}
+            className={`max-w-[90%] whitespace-pre-wrap rounded-xl px-3.5 py-2.5 text-[14px] leading-relaxed ${
+              m.role === "assistant" ? "bg-white/[0.07] text-white/90" : "ml-auto bg-primary text-white"
+            }`}
+          >
             {m.content}
           </p>
         ))}
+        {sending && (
+          <p className="flex w-14 items-center justify-center gap-1 rounded-xl bg-white/[0.07] px-3 py-3" aria-label="Assistant is typing">
+            {[0, 150, 300].map((d) => (
+              <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 motion-reduce:animate-none" style={{ animationDelay: `${d}ms` }} />
+            ))}
+          </p>
+        )}
         <div ref={end} />
       </div>
       {session?.status === "started" && (
-        <form onSubmit={send} className="flex gap-2 border-t border-line p-3">
+        <form onSubmit={send} className="flex gap-2 border-t border-white/10 p-3">
           <label className="sr-only" htmlFor="ask">Ask the assistant</label>
-          <input id="ask" className="field" placeholder="Ask about this step" value={msg} onChange={(e) => setMsg(e.target.value)} />
-          <button className="btn" disabled={sending || !msg.trim()}>{sending ? "…" : "Send"}</button>
+          <input
+            id="ask"
+            className="w-full rounded-[7px] border border-white/15 bg-white/5 px-3 py-2 text-[14px] text-white placeholder:text-white/40 focus:border-primary focus:outline-none"
+            placeholder="Ask about this step"
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+          />
+          <button className="btn" disabled={sending || !msg.trim()}>Send</button>
         </form>
       )}
     </aside>
