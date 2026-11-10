@@ -38,7 +38,10 @@ function Passport() {
         method: "POST",
         json: { holder_commitment: holderCommitment(secret) },
       });
-      setCreds((cs) => [cred, ...(cs ?? []).map((c) => (c.status === "active" ? { ...c, status: "revoked" as const } : c))]);
+      setCreds((cs) => [
+        cred,
+        ...(cs ?? []).map((c) => (c.status === "active" ? { ...c, status: "revoked" as const } : c)),
+      ]);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -49,72 +52,122 @@ function Passport() {
   const approved = kyc?.status === "approved";
 
   return (
-    <>
+    <div className="space-y-8">
       <PageTitle
         title="Your ZK Passport"
-        lead="A credential signed by the issuer and bound to a secret that only this browser holds. You use it to prove you passed KYC without sharing who you are."
+        highlight="credential"
+        lead="An issuer-signed identity credential bound to a cryptographic secret held exclusively by your browser. Prove KYC approval and age without revealing who you are."
       />
+
       <ErrorNote>{error}</ErrorNote>
-      <div className="mt-4 grid items-start gap-10 xl:grid-cols-[1.1fr_1fr]">
+
+      <div className="grid items-start gap-8 xl:grid-cols-[1.1fr_1fr]">
         <PassportDoc holderName={user?.display_name ?? ""} credential={active} />
 
-        <section className="space-y-5">
+        <section className="space-y-6">
           {creds === null ? (
-            <Spinner label="Loading credential" />
+            <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-xs">
+              <Spinner label="Loading cryptographic credential" />
+            </div>
           ) : !active ? (
             approved ? (
-              <>
-                <h2 className="text-2xl font-semibold">Issue your Passport</h2>
-                <p className="text-ink-soft">
-                  Your browser creates a random holder secret and sends only its Poseidon hash. The issuer signs that
-                  hash together with your KYC claim and an expiry date.
+              <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-xs sm:p-7 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs uppercase tracking-wider text-[#0018f2] font-semibold">
+                    Verification Complete
+                  </span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#1a7f4b]" />
+                </div>
+                <h2 className="font-serif text-2xl font-bold text-[#111111]">Issue your ZK Passport</h2>
+                <p className="font-sans text-sm leading-relaxed text-neutral-600">
+                  Your browser generates a 248-bit secret, computes its Poseidon hash commitment, and requests an
+                  issuer signature over the BabyJubJub curve. The secret never leaves your device.
                 </p>
-                <button className="btn btn-accent" onClick={issue} disabled={busy}>
-                  {busy ? <Spinner label="Issuing" /> : "Issue Passport"}
+                <button
+                  className="btn bg-[#0018f2] text-white hover:bg-[#0014cc] shadow-xs"
+                  onClick={issue}
+                  disabled={busy}
+                >
+                  {busy ? <Spinner label="Generating keys & issuing" /> : "Issue ZK Passport"}
                 </button>
-              </>
+              </div>
             ) : (
-              <>
-                <h2 className="text-2xl font-semibold">Not issued yet</h2>
-                <p className="text-ink-soft">A Passport can only be issued after a reviewer approves your verification.</p>
-                <Link href="/verify" className="btn">Go to verification</Link>
-              </>
+              <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-xs sm:p-7 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs uppercase tracking-wider text-amber-600 font-semibold">
+                    KYC Required
+                  </span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                </div>
+                <h2 className="font-serif text-2xl font-bold text-[#111111]">Not issued yet</h2>
+                <p className="font-sans text-sm leading-relaxed text-neutral-600">
+                  A ZK Passport can only be issued after your verification session is confirmed by the AI checks and a reviewer.
+                </p>
+                <Link
+                  href="/verify"
+                  className="btn bg-[#0018f2] text-white hover:bg-[#0014cc] shadow-xs"
+                >
+                  Go to verification →
+                </Link>
+              </div>
             )
           ) : (
-            <>
-              <h2 className="text-2xl font-semibold">Ready to prove</h2>
-              <p className="text-ink-soft">
-                For each payment, your browser generates a Groth16 proof that this credential is signed, approved,
-                unexpired and yours, tied to that one payment request. The verifier receives the proof and the
-                strip at the bottom of the passport, nothing else.
+            <div className="rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-xs sm:p-7 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs uppercase tracking-wider text-[#1a7f4b] font-semibold">
+                  Credential Ready
+                </span>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#1a7f4b]" />
+              </div>
+              <h2 className="font-serif text-2xl font-bold text-[#111111]">Ready to prove per payment</h2>
+              <p className="font-sans text-sm leading-relaxed text-neutral-600">
+                For every transaction, your browser generates a Groth16 zero-knowledge proof using <code>snarkjs</code> in
+                approx. 2 seconds. The verifier verifies the cryptographic proof without accessing your identity details.
               </p>
+
               {!hasSecret && (
                 <ErrorNote>
-                  This browser doesn&apos;t hold the secret for your active Passport, so it can&apos;t make proofs here.
-                  Issue a new Passport to use this browser; the old one will be revoked.
+                  This browser does not hold the private secret for this active Passport. Issue a new Passport to bind
+                  it to this device; the old credential will be automatically revoked.
                 </ErrorNote>
               )}
+
               <div className="flex flex-wrap gap-3">
-                <Link href="/pay" className="btn">Use it for a payment</Link>
+                <Link
+                  href="/pay"
+                  className="btn bg-[#0018f2] text-white hover:bg-[#0014cc] shadow-xs"
+                >
+                  Authorize a payment →
+                </Link>
                 {!hasSecret && approved && (
-                  <button className="btn btn-quiet" onClick={issue} disabled={busy}>Reissue for this browser</button>
+                  <button
+                    className="btn btn-quiet"
+                    onClick={issue}
+                    disabled={busy}
+                  >
+                    Reissue for this browser
+                  </button>
                 )}
               </div>
-              <details className="rounded-2xl bg-paper-deep p-4">
-                <summary className="cursor-pointer font-semibold">What the circuit checks</summary>
-                <ul className="mt-3 list-disc space-y-1 pl-5 text-[15px] text-ink-soft">
-                  <li>The issuer&apos;s EdDSA signature over the credential (Poseidon hash).</li>
-                  <li>You know the secret behind the credential&apos;s holder commitment.</li>
-                  <li>The credential says <code>kyc_approved = 1</code>.</li>
-                  <li>The expiry date is later than the verifier&apos;s current time.</li>
-                  <li>It outputs a one-time nullifier for this payment and a revocation tag scoped to this verifier.</li>
+
+              {/* Monospace Circuit details card */}
+              <div className="rounded-xl border border-neutral-200/80 bg-[#FAFAFA] p-4 text-xs font-sans text-neutral-700">
+                <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-2">
+                  What the Circom Groth16 circuit verifies
+                </div>
+                <ul className="space-y-1.5 list-disc pl-4 text-neutral-600">
+                  <li>Issuer EdDSA signature validity over BabyJubJub with Poseidon hash</li>
+                  <li>Knowledge of holder secret matching public commitment</li>
+                  <li>Confirmed KYC claim: <code>kyc_approved = 1</code></li>
+                  <li>Expiry timestamp constraint: <code>expires_at &gt; current_time</code></li>
+                  <li>Generates single-use payment nullifiers & verifier-scoped revocation tags</li>
                 </ul>
-              </details>
-            </>
+              </div>
+            </div>
           )}
         </section>
       </div>
-    </>
+    </div>
   );
 }
 

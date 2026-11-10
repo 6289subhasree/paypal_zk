@@ -24,7 +24,7 @@ const BLINK_OPEN = 0.25;
 const TURN_THRESHOLD = 0.17; // nose offset from the face centre, as a share of face width
 
 const TASK_TEXT: Record<Task, string> = {
-  blink: "Blink twice",
+  blink: "Blink twice naturally",
   turn: "Slowly turn your head to one side, then to the other",
 };
 
@@ -183,59 +183,102 @@ export function LivenessCheck({ busy, onDone }: { busy: string; onDone: (r: Live
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-2xl font-semibold">Liveness</h2>
-        <Badge tone="neutral">Runs on your device</Badge>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-serif text-xl font-bold text-neutral-900 sm:text-2xl">On-Device Active Liveness</h2>
+        <Badge tone="neutral">MediaPipe Wasm</Badge>
       </div>
-      <p className="text-ink-soft">
-        Follow two quick prompts in front of your camera. Face tracking runs in this browser with MediaPipe: nothing is
-        recorded or uploaded, only whether the prompts were completed. It isn&apos;t a certified liveness check.
+      <p className="font-sans text-xs sm:text-sm text-neutral-600 leading-relaxed">
+        Follow two short prompts in front of your camera. Face mesh tracking executes strictly in your browser tab:
+        zero images or video frames are ever uploaded.
       </p>
 
-      <div className="relative aspect-video overflow-hidden rounded-2xl bg-ink">
+      {/* Video Viewport Container */}
+      <div className="relative aspect-video overflow-hidden rounded-2xl border border-neutral-800 bg-[#111113] shadow-inner">
         <video ref={video} playsInline muted className="h-full w-full -scale-x-100 object-cover" />
+
+        {/* Reticle guide overlay */}
+        {running && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="h-48 w-40 sm:h-56 sm:w-48 rounded-[50%] border-2 border-dashed border-[#a9d5f5]/60" />
+          </div>
+        )}
+
         {!running && phase !== "passed" && (
-          <div className="absolute inset-0 grid place-items-center p-4 text-center text-paper">
-            {phase === "unavailable"
-              ? "Camera or face tracking isn't available here. You can use the simulated step instead."
-              : phase === "failed"
-                ? hint
-                : "Camera is off."}
+          <div className="absolute inset-0 grid place-items-center p-6 text-center text-white">
+            <div className="max-w-xs space-y-2">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white">
+                📷
+              </div>
+              <p className="font-sans text-sm text-neutral-300">
+                {phase === "unavailable"
+                  ? "Camera or face tracking isn't available here. You can proceed with the simulated check."
+                  : phase === "failed"
+                    ? hint
+                    : "Camera is inactive."}
+              </p>
+            </div>
           </div>
         )}
+
         {phase === "loading" && (
-          <div className="absolute inset-0 grid place-items-center text-paper">
-            <Spinner label="Starting camera and face tracking" />
+          <div className="absolute inset-0 grid place-items-center bg-black/60 text-white backdrop-blur-xs">
+            <Spinner label="Loading MediaPipe model & camera" />
           </div>
         )}
+
         {phase === "passed" && (
-          <div className="absolute inset-0 grid place-items-center bg-ink/60 text-paper">
-            <span className="font-display text-2xl font-semibold">Liveness passed</span>
+          <div className="absolute inset-0 grid place-items-center bg-[#0018f2]/85 text-white backdrop-blur-xs">
+            <div className="text-center space-y-1">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0018f2] text-xl font-bold">
+                ✓
+              </div>
+              <div className="font-serif text-2xl font-bold">Liveness Verified</div>
+              <div className="font-mono text-xs text-[#a9d5f5]">On-device mesh match complete</div>
+            </div>
           </div>
         )}
       </div>
 
       {phase === "running" && (
-        <div aria-live="polite" className="space-y-2">
-          <ol className="space-y-1">
+        <div aria-live="polite" className="rounded-xl border border-neutral-200 bg-[#FAFAFA] p-3.5 space-y-2">
+          <ol className="space-y-1.5 font-sans text-xs sm:text-sm">
             {tasks.map((t, i) => (
-              <li key={t} className={i === current ? "font-semibold" : i < current ? "text-approve" : "text-ink-soft"}>
-                {i < current ? "✓ " : `${i + 1}. `}
-                {TASK_TEXT[t]}
-                {t === "blink" && i === current && ` (${blinks}/2)`}
-                {t === "turn" && i === current && ` (${Number(sides.a) + Number(sides.b)}/2 sides)`}
+              <li
+                key={t}
+                className={`flex items-center justify-between font-medium ${
+                  i === current ? "text-[#0018f2] font-semibold" : i < current ? "text-[#1a7f4b]" : "text-neutral-400"
+                }`}
+              >
+                <span>
+                  {i < current ? "✓ " : `${i + 1}. `}
+                  {TASK_TEXT[t]}
+                  {t === "blink" && i === current && ` (${blinks}/2 blinks)`}
+                  {t === "turn" && i === current && ` (${Number(sides.a) + Number(sides.b)}/2 sides)`}
+                </span>
+                {i === current && (
+                  <span className="font-mono text-xs uppercase bg-[#0018f2]/10 text-[#0018f2] px-2 py-0.5 rounded">
+                    Active
+                  </span>
+                )}
               </li>
             ))}
           </ol>
-          {hint && <p className="text-reject">{hint}</p>}
-          <p className="text-sm text-ink-soft">{Math.max(0, Math.ceil((TIME_LIMIT_MS - elapsed) / 1000))} s left</p>
+          {hint && <p className="font-sans text-xs text-[#cf3a31]">{hint}</p>}
+          <div className="flex items-center justify-between text-xs text-neutral-400 font-mono pt-1">
+            <span>Timeout limit</span>
+            <span>{Math.max(0, Math.ceil((TIME_LIMIT_MS - elapsed) / 1000))}s remaining</span>
+          </div>
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3 pt-1">
         {(phase === "idle" || phase === "failed") && (
-          <button className="btn" onClick={start} disabled={!!busy}>
-            {phase === "failed" ? "Try again" : "Start liveness check"}
+          <button
+            className="btn bg-[#0018f2] text-white hover:bg-[#0014cc] shadow-xs"
+            onClick={start}
+            disabled={!!busy}
+          >
+            {phase === "failed" ? "Try again" : "Start camera check"}
           </button>
         )}
         {phase === "passed" && busy && <Spinner label={busy} />}
@@ -248,7 +291,7 @@ export function LivenessCheck({ busy, onDone }: { busy: string; onDone: (r: Live
               onDone({ method: "simulated", challenges: [] });
             }}
           >
-            Use simulated step instead
+            Use simulated check instead
           </button>
         )}
       </div>
