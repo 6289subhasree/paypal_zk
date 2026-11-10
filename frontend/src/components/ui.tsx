@@ -9,7 +9,7 @@ export function Badge({ tone, children }: { tone: "sim" | "sandbox" | "ok" | "ba
     bad: "bg-reject-soft text-reject",
     neutral: "bg-paper-deep text-ink-soft",
   }[tone];
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-semibold ${styles}`}>{children}</span>;
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[13px] font-medium ${styles}`}>{children}</span>;
 }
 
 export function Stamp({ kind, children }: { kind: "accepted" | "rejected"; children: React.ReactNode }) {
@@ -17,7 +17,7 @@ export function Stamp({ kind, children }: { kind: "accepted" | "rejected"; child
   return (
     <div
       role="status"
-      className={`stamp inline-block rounded-lg border-[3px] px-4 py-2 font-display text-2xl font-extrabold ${color}`}
+      className={`stamp inline-block rounded-lg border-[3px] bg-white/90 px-4 py-2 font-display text-2xl font-bold tracking-tight ${color}`}
       style={{ boxShadow: "inset 0 0 0 2px currentColor" }}
     >
       {children}
@@ -36,9 +36,9 @@ export function ErrorNote({ children }: { children: React.ReactNode }) {
 
 export function PageTitle({ title, lead }: { title: string; lead?: React.ReactNode }) {
   return (
-    <header className="mb-8 max-w-2xl">
-      <h1 className="text-4xl font-bold sm:text-5xl">{title}</h1>
-      {lead && <p className="mt-3 text-lg text-ink-soft">{lead}</p>}
+    <header className="mb-10 max-w-2xl">
+      <h1 className="text-4xl font-semibold sm:text-[3.4rem]">{title}</h1>
+      {lead && <p className="mt-4 text-lg leading-relaxed text-ink-soft">{lead}</p>}
     </header>
   );
 }

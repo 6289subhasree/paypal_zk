@@ -3,8 +3,8 @@ import type { Credential } from "@/lib/api";
 import { short } from "@/lib/zk";
 
 /**
- * The ZK Passport drawn as a security-printed document page. The upper half is what
- * stays with the holder. The machine-readable strip is what a verifier receives.
+ * The ZK Passport as a navy security card. The upper part is what stays with the holder;
+ * the machine-readable strip at the bottom is all a verifier receives.
  */
 export function PassportDoc({
   holderName,
@@ -21,11 +21,15 @@ export function PassportDoc({
   const status = credential?.status ?? "not issued";
 
   return (
-    <figure className="relative mx-auto w-full max-w-xl overflow-hidden rounded-[22px] border border-line bg-surface shadow-[0_18px_50px_-30px_rgba(22,50,79,0.55)]">
-      <div className="guilloche px-6 pb-6 pt-5 sm:px-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="font-display text-lg font-bold">ZK Passport</span>
-          <span className="text-sm text-ink-soft">{credential?.credential_type ?? "KycApprovedCredential"}</span>
+    <figure className="passport-card relative mx-auto w-full max-w-xl overflow-hidden rounded-[20px] shadow-[0_30px_60px_-35px_rgba(0,28,100,0.8)]">
+      <div className="guilloche pointer-events-none absolute inset-0" aria-hidden />
+      <div className="relative px-6 pb-6 pt-5 sm:px-8">
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <CheckMark />
+            ZK Passport
+          </span>
+          <span className="text-sm text-white/60">{credential?.credential_type ?? "KycApprovedCredential"}</span>
         </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
@@ -36,12 +40,12 @@ export function PassportDoc({
           <Field label="Issued" value={fmt(credential?.issued_at)} />
           <Field label="Expires" value={fmt(credential?.expires_at)} />
         </dl>
-        <p className="mt-5 text-sm text-ink-soft">
+        <p className="mt-5 text-sm text-white/65">
           Your name, documents and credential ID stay in this browser. A verifier only ever sees the line below.
         </p>
       </div>
 
-      <div className="border-t border-dashed border-line bg-paper-deep px-6 py-4 font-mono text-[13px] leading-6 sm:px-8">
+      <div className="relative bg-white/95 px-6 py-4 font-mono text-[13px] leading-6 text-navy-deep sm:px-8">
         <span className="sr-only">What the verifier sees: </span>
         <div className="truncate">P&lt;ZKPASS&lt;&lt;KYC&lt;APPROVED&lt;&lt;{credential ? "VALID" : "NONE"}&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
         <div className="truncate">
@@ -58,14 +62,23 @@ export function PassportDoc({
 }
 
 function Field({ label, value, private: isPrivate, tone }: { label: string; value: string; private?: boolean; tone?: "ok" | "bad" }) {
-  const color = tone === "ok" ? "text-approve" : tone === "bad" ? "text-reject" : "";
+  const color = tone === "ok" ? "text-[#7ee2a8]" : tone === "bad" ? "text-[#ff9b94]" : "text-white";
   return (
     <div>
-      <dt className="text-sm text-ink-soft">
+      <dt className="text-sm text-white/55">
         {label}
-        {isPrivate && <span className="ml-1.5 text-brand">(stays with you)</span>}
+        {isPrivate && <span className="ml-1.5 text-yellow">(stays with you)</span>}
       </dt>
       <dd className={`font-semibold ${tone ? "capitalize" : ""} ${color}`}>{value}</dd>
     </div>
+  );
+}
+
+function CheckMark() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden>
+      <circle cx="10" cy="10" r="10" fill="var(--yellow)" />
+      <path d="M5.8 10.3l2.7 2.7 5.6-5.9" fill="none" stroke="var(--navy-deep)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
