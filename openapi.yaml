@@ -1,0 +1,1203 @@
+components:
+  schemas:
+    AuthorizeIn:
+      properties:
+        proof:
+          title: Proof
+          type: object
+        public_signals:
+          items:
+            type: string
+          maxItems: 9
+          minItems: 9
+          title: Public Signals
+          type: array
+      required:
+      - proof
+      - public_signals
+      title: AuthorizeIn
+      type: object
+    Body_upload_document_api_kyc_sessions__session_id__documents_post:
+      properties:
+        file:
+          format: binary
+          title: File
+          type: string
+      required:
+      - file
+      title: Body_upload_document_api_kyc_sessions__session_id__documents_post
+      type: object
+    ChatIn:
+      properties:
+        message:
+          anyOf:
+          - maxLength: 1000
+            type: string
+          - type: 'null'
+          title: Message
+        step:
+          default: welcome
+          pattern: ^(welcome|details|document|liveness|submit)$
+          title: Step
+          type: string
+      title: ChatIn
+      type: object
+    ClaimIn:
+      properties:
+        paypal_email:
+          format: email
+          title: Paypal Email
+          type: string
+        proof:
+          title: Proof
+          type: object
+        public_signals:
+          items:
+            type: string
+          maxItems: 9
+          minItems: 9
+          title: Public Signals
+          type: array
+      required:
+      - proof
+      - public_signals
+      - paypal_email
+      title: ClaimIn
+      type: object
+    CreateOrderIn:
+      properties:
+        payment_request_id:
+          title: Payment Request Id
+          type: string
+        save_wallet:
+          default: false
+          title: Save Wallet
+          type: boolean
+      required:
+      - payment_request_id
+      title: CreateOrderIn
+      type: object
+    CreatePayoutIn:
+      properties:
+        amount:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            maximum: 5000.0
+            type: number
+          - type: string
+          title: Amount
+        currency:
+          default: USD
+          pattern: ^[A-Z]{3}$
+          title: Currency
+          type: string
+        min_age:
+          default: 0
+          maximum: 99.0
+          minimum: 0.0
+          title: Min Age
+          type: integer
+        note:
+          default: ''
+          maxLength: 200
+          title: Note
+          type: string
+      required:
+      - amount
+      title: CreatePayoutIn
+      type: object
+    CreateRequestIn:
+      properties:
+        amount:
+          anyOf:
+          - exclusiveMinimum: 0.0
+            maximum: 10000.0
+            type: number
+          - type: string
+          title: Amount
+        currency:
+          default: USD
+          pattern: ^[A-Z]{3}$
+          title: Currency
+          type: string
+        description:
+          default: ''
+          maxLength: 200
+          title: Description
+          type: string
+        min_age:
+          default: 0
+          maximum: 99.0
+          minimum: 0.0
+          title: Min Age
+          type: integer
+      required:
+      - amount
+      title: CreateRequestIn
+      type: object
+    DecisionIn:
+      properties:
+        decision:
+          pattern: ^(approved|rejected|needs_review)$
+          title: Decision
+          type: string
+        reason_code:
+          default: reviewer_decision
+          maxLength: 60
+          title: Reason Code
+          type: string
+      required:
+      - decision
+      title: DecisionIn
+      type: object
+    DetailsIn:
+      properties:
+        date_of_birth:
+          format: date
+          title: Date Of Birth
+          type: string
+        full_name:
+          maxLength: 120
+          minLength: 2
+          title: Full Name
+          type: string
+      required:
+      - full_name
+      - date_of_birth
+      title: DetailsIn
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    IssueIn:
+      properties:
+        holder_commitment:
+          pattern: ^[0-9]{1,78}$
+          title: Holder Commitment
+          type: string
+      required:
+      - holder_commitment
+      title: IssueIn
+      type: object
+    LivenessIn:
+      properties:
+        challenges:
+          items:
+            enum:
+            - blink
+            - turn_left
+            - turn_right
+            type: string
+          maxItems: 6
+          title: Challenges
+          type: array
+        duration_ms:
+          anyOf:
+          - maximum: 600000.0
+            minimum: 0.0
+            type: integer
+          - type: 'null'
+          title: Duration Ms
+        method:
+          default: simulated
+          enum:
+          - simulated
+          - on_device
+          title: Method
+          type: string
+      title: LivenessIn
+      type: object
+    LoginIn:
+      properties:
+        email:
+          format: email
+          title: Email
+          type: string
+        password:
+          title: Password
+          type: string
+      required:
+      - email
+      - password
+      title: LoginIn
+      type: object
+    RegisterIn:
+      properties:
+        display_name:
+          maxLength: 120
+          minLength: 1
+          title: Display Name
+          type: string
+        email:
+          format: email
+          title: Email
+          type: string
+        password:
+          maxLength: 128
+          minLength: 8
+          title: Password
+          type: string
+      required:
+      - email
+      - password
+      - display_name
+      title: RegisterIn
+      type: object
+    StartIn:
+      properties:
+        consent:
+          title: Consent
+          type: boolean
+      required:
+      - consent
+      title: StartIn
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+    VaultedPayIn:
+      properties:
+        payment_request_id:
+          title: Payment Request Id
+          type: string
+      required:
+      - payment_request_id
+      title: VaultedPayIn
+      type: object
+  securitySchemes:
+    HTTPBearer:
+      scheme: bearer
+      type: http
+info:
+  description: Privacy-preserving identity verification and PayPal payment authorization
+    API for APIMatic SDK generation
+  title: ZK Pass Developer API
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/auth/login:
+    post:
+      operationId: login_api_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Login
+      tags:
+      - auth
+  /api/auth/logout:
+    post:
+      operationId: logout_api_auth_logout_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Logout
+      tags:
+      - auth
+  /api/auth/me:
+    get:
+      operationId: me_api_auth_me_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Me
+      tags:
+      - auth
+  /api/auth/register:
+    post:
+      operationId: register_api_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Register
+      tags:
+      - auth
+  /api/credentials/issue:
+    post:
+      operationId: issue_api_credentials_issue_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Issue
+      tags:
+      - credentials
+  /api/credentials/issuer:
+    get:
+      operationId: issuer_info_api_credentials_issuer_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Issuer Info
+      tags:
+      - credentials
+  /api/credentials/me:
+    get:
+      operationId: my_credentials_api_credentials_me_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: My Credentials
+      tags:
+      - credentials
+  /api/credentials/{credential_id}/revoke:
+    post:
+      operationId: revoke_api_credentials__credential_id__revoke_post
+      parameters:
+      - in: path
+        name: credential_id
+        required: true
+        schema:
+          title: Credential Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Revoke
+      tags:
+      - credentials
+  /api/credentials/{credential_id}/status:
+    get:
+      operationId: status_api_credentials__credential_id__status_get
+      parameters:
+      - in: path
+        name: credential_id
+        required: true
+        schema:
+          title: Credential Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Status
+      tags:
+      - credentials
+  /api/health:
+    get:
+      operationId: health_api_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Health
+  /api/kyc/sessions:
+    post:
+      operationId: start_api_kyc_sessions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Start
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}:
+    get:
+      operationId: get_session_api_kyc_sessions__session_id__get
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get Session
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}/chat:
+    post:
+      operationId: chat_api_kyc_sessions__session_id__chat_post
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Chat
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}/complete:
+    post:
+      operationId: complete_api_kyc_sessions__session_id__complete_post
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Complete
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}/details:
+    post:
+      operationId: details_api_kyc_sessions__session_id__details_post
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetailsIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Details
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}/documents:
+    post:
+      operationId: upload_document_api_kyc_sessions__session_id__documents_post
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_document_api_kyc_sessions__session_id__documents_post'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Upload Document
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}/liveness:
+    post:
+      description: 'Record the liveness step. No video or images reach the server.
+
+
+        On-device results come from the user''s browser and can''t be verified here,
+
+        so they are labelled as not certified. Production would use a certified SDK.'
+      operationId: liveness_api_kyc_sessions__session_id__liveness_post
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/LivenessIn'
+              - type: 'null'
+              title: Body
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Liveness
+      tags:
+      - kyc
+  /api/kyc/sessions/{session_id}/summary:
+    get:
+      operationId: summary_api_kyc_sessions__session_id__summary_get
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Summary
+      tags:
+      - kyc
+  /api/payments/history:
+    get:
+      operationId: history_api_payments_history_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: History
+      tags:
+      - payments
+  /api/payments/requests:
+    post:
+      operationId: create_request_api_payments_requests_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequestIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Request
+      tags:
+      - payments
+  /api/payments/requests/{request_id}:
+    get:
+      operationId: get_request_api_payments_requests__request_id__get
+      parameters:
+      - in: path
+        name: request_id
+        required: true
+        schema:
+          title: Request Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get Request
+      tags:
+      - payments
+  /api/payments/requests/{request_id}/authorize:
+    post:
+      operationId: authorize_api_payments_requests__request_id__authorize_post
+      parameters:
+      - in: path
+        name: request_id
+        required: true
+        schema:
+          title: Request Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Authorize
+      tags:
+      - payments
+  /api/payouts:
+    get:
+      operationId: mine_api_payouts_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Mine
+      tags:
+      - payouts
+    post:
+      operationId: create_api_payouts_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayoutIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create
+      tags:
+      - payouts
+  /api/payouts/{payout_id}:
+    get:
+      operationId: get_one_api_payouts__payout_id__get
+      parameters:
+      - in: path
+        name: payout_id
+        required: true
+        schema:
+          title: Payout Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get One
+      tags:
+      - payouts
+  /api/payouts/{payout_id}/claim:
+    post:
+      operationId: claim_api_payouts__payout_id__claim_post
+      parameters:
+      - in: path
+        name: payout_id
+        required: true
+        schema:
+          title: Payout Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Claim
+      tags:
+      - payouts
+  /api/payouts/{payout_id}/refresh:
+    post:
+      description: Payouts settle asynchronously; ask PayPal for the item's latest
+        status.
+      operationId: refresh_api_payouts__payout_id__refresh_post
+      parameters:
+      - in: path
+        name: payout_id
+        required: true
+        schema:
+          title: Payout Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Refresh
+      tags:
+      - payouts
+  /api/paypal/config:
+    get:
+      operationId: client_config_api_paypal_config_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Client Config
+      tags:
+      - paypal
+  /api/paypal/orders:
+    post:
+      operationId: create_order_api_paypal_orders_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Order
+      tags:
+      - paypal
+  /api/paypal/orders/vaulted:
+    post:
+      description: One-click payment with the saved PayPal wallet. The ZK proof gate
+        still applies.
+      operationId: pay_with_saved_wallet_api_paypal_orders_vaulted_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VaultedPayIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Pay With Saved Wallet
+      tags:
+      - paypal
+  /api/paypal/orders/{order_id}:
+    get:
+      operationId: order_status_api_paypal_orders__order_id__get
+      parameters:
+      - in: path
+        name: order_id
+        required: true
+        schema:
+          title: Order Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Order Status
+      tags:
+      - paypal
+  /api/paypal/orders/{order_id}/capture:
+    post:
+      operationId: capture_api_paypal_orders__order_id__capture_post
+      parameters:
+      - in: path
+        name: order_id
+        required: true
+        schema:
+          title: Order Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Capture
+      tags:
+      - paypal
+  /api/paypal/transactions/{transaction_id}/refund:
+    post:
+      description: Full refund of a captured Sandbox payment. Only the merchant who
+        was paid can refund.
+      operationId: refund_api_paypal_transactions__transaction_id__refund_post
+      parameters:
+      - in: path
+        name: transaction_id
+        required: true
+        schema:
+          title: Transaction Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Refund
+      tags:
+      - paypal
+  /api/paypal/wallet:
+    delete:
+      operationId: forget_wallet_api_paypal_wallet_delete
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Forget Wallet
+      tags:
+      - paypal
+    get:
+      operationId: wallet_api_paypal_wallet_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Wallet
+      tags:
+      - paypal
+  /api/review/queue:
+    get:
+      operationId: queue_api_review_queue_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Queue
+      tags:
+      - kyc
+  /api/review/sessions/{session_id}/decision:
+    post:
+      operationId: decide_api_review_sessions__session_id__decision_post
+      parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          title: Session Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionIn'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Decide
+      tags:
+      - kyc
+  /api/verification/status:
+    get:
+      operationId: verification_status_api_verification_status_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Verification Status
+      tags:
+      - kyc

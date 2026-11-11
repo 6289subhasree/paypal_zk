@@ -1,0 +1,51 @@
+# Render Infrastructure as Code Blueprint
+# Reference: https://render.com/docs/blueprint-spec
+
+services:
+  # -------------------------------------------------------------
+  # 1. FastAPI Python Backend Service
+  # -------------------------------------------------------------
+  - type: web
+    name: zkpass-backend
+    runtime: python
+    region: ohio
+    plan: starter
+    buildCommand: "pip install -r backend/requirements.txt && python backend/scripts/seed.py"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PAYPAL_MODE
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false
+
+  # -------------------------------------------------------------
+  # 2. Next.js 16 Frontend Web Service
+  # -------------------------------------------------------------
+  - type: web
+    name: zkpass-frontend
+    runtime: node
+    region: ohio
+    plan: starter
+    buildCommand: "cd frontend && npm install && npm run build"
+    startCommand: "cd frontend && npm start"
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: zkpass-backend
+          property: host

@@ -14,67 +14,72 @@ Every new app, marketplace or client asks for the same thing: upload your ID, ta
 We wanted to separate that fact from the documents behind it. Zero-knowledge proofs make that possible. We wanted to see whether a proof could be more than a "Verified ✓" badge and actually be the thing that decides whether a payment goes through.
 
 ## What it does
-ZK Pass has three connected parts.
+ZK Pass is an end-to-end privacy-preserving identity verification and payment authorization platform built across five core capabilities:
 
-**ZK Verify AI.** An AI assistant guides the user through a demo identity check using a SPECIMEN test card. Tesseract OCR reads the card, rule-based checks compare it with what the user typed, and the AI explains failed checks in plain language and writes a neutral evidence summary. A liveness check runs entirely in the browser with MediaPipe: the user blinks twice and turns their head to each side, in random order, and no video ever leaves the device. A human reviewer approves or rejects. The AI never makes the decision, and the liveness result is labelled as on-device and not certified.
+1. **ZK Verify AI:** An AI assistant guides the user through an identity check using a SPECIMEN test card. Tesseract OCR reads the card, deterministic checks validate field consistency, and an AI companion explains failed checks in plain language while compiling an evidence summary. An on-device active liveness check executes in the browser using MediaPipe face mesh landmarks (tracking blinks and rotational turns with zero video or frames uploaded). Human reviewers make final approval decisions.
 
-**ZK Passport.** After approval, the user's browser generates a secret and sends only its Poseidon hash. The issuer signs a credential (EdDSA on BabyJubJub) that contains the `kyc_approved` claim, an expiry date, the date of birth and that holder commitment. The holder keeps the signed details in their browser; the name and document number are never in it.
+2. **ZK Passport:** Upon KYC confirmation, the user's browser generates a 248-bit secret and submits only its Poseidon commitment hash. The issuer returns an EdDSA signature over the BabyJubJub curve certifying KYC approval and birthdate without storing the private key.
 
-**ZK Pay.** A merchant creates a payment request. To pay, the user's browser generates a Groth16 proof that the credential is signed by the trusted issuer, belongs to them, says KYC approved and hasn't expired. If the merchant marks the request 18+, the same proof also shows the holder is old enough without revealing their birth date. The proof is bound to that exact payment request and outputs a one-time nullifier. The backend verifies it and only then lets PayPal Sandbox checkout open. It creates and captures the order server-side and shows PayPal's real order and capture IDs on the receipt.
+3. **ZK Pay:** A merchant creates a payment request. To pay, the user's browser compiles a Groth16 zero-knowledge proof (~2s via `snarkjs`) demonstrating valid issuer signatures, unrevoked status, holder binding, and optional 18+ age verification without disclosing date of birth. Each proof is cryptographically bound to that exact payment challenge and issues a single-use nullifier. The backend verifies the proof server-side before unlocking PayPal Sandbox Orders v2 checkout, PayPal Vault 1-click pay, and verified Payouts.
 
-The verifier receives nine numbers and no identity data.
+4. **Agentic Commerce & Channel3 Shopping Agent (`/agent`):** An autonomous AI purchasing assistant connects buyers to real-time product catalogs across 100M+ items via the **Channel3 API**. When the agent executes a purchase, it uses a delegated ZK Pass proof to authorize PayPal checkout without the merchant or AI ever seeing the user's real name, address, or credit card details.
 
-The same proof gate runs across PayPal:
-- **One-click repeat payments with PayPal Vault.** Save PayPal on the first payment; afterwards a fresh proof plus one click pays the saved wallet with no popup. A saved wallet never skips the proof.
-- **Refunds.** The merchant who was paid can refund through the Payments API.
-- **Payouts to verified people.** A platform creates a payout; PayPal Payouts sends it only after the *recipient* proves KYC with their own Passport, and each payout can be claimed once.
+5. **Enterprise Compliance & Audit with AG Grid & Bryntum (`/review`, `/history`):**
+   - **AG Grid Cryptographic Audit Ledger:** Live financial audit trail displaying Groth16 public signals, nullifiers, revocation tags, and PayPal capture IDs with column pinning, sorting, filtering, and 1-click CSV/Excel export.
+   - **Bryntum Compliance TaskBoard:** Visual drag-and-drop verification workflow board managing sessions from OCR ingestion to cryptographic passport issuance.
 
-The payment page has a "Try to break it" panel. An altered proof, a real proof for a different payment, an old proof and a replayed proof are each rejected with a reason, and checkout stays locked.
+6. **Developer Portal & SDKs via APIMatic (`/developers`):** Complete OpenAPI 3.0 specification with multi-language client SDKs (TypeScript, Python, Go, PHP) enabling web2 merchants to integrate ZK-gated checkout in under five lines of code.
 
 ## How we built it
-- **Circuit:** Circom 2 with circomlib (EdDSA-Poseidon verifier, Poseidon, comparators), about 11k constraints, Groth16 via snarkjs. Proofs are generated in the browser in about 2 seconds. The age check compares YYYYMMDD dates: `birth_date <= today - min_age * 10000`.
-- **Backend:** FastAPI and SQLAlchemy (SQLite, PostgreSQL-ready), bcrypt and JWT auth. A Node bridge handles issuer signing and proof verification.
-- **Proof gate:** one shared verifier for payments and payouts checks the proof, the issuer key, the verifier ID, the challenge, proof freshness, the date and age requirement, a verifier-scoped revocation tag, and that the nullifier hasn't been used.
-- **PayPal:** Orders API v2 (create, capture, Vault with `store_in_vault` and `vault_id`), Payments API v2 refunds and Payouts API v1, all with `PayPal-Request-Id` idempotency keys. Captures are validated against status, reference ID, amount and currency before a payment is marked paid, and PayPal's own error codes are turned into plain-language Sandbox hints. The PayPal JavaScript SDK handles buyer approval.
-- **Liveness:** MediaPipe Face Landmarker in the browser, using blink blendshapes and nose-to-cheek geometry for head turns.
-- **AI:** a local LLM through Ollama (`llama3.2:3b`) or the Gemini API free tier, with an offline template fallback. It's used for guidance, OCR field extraction, failed-check explanations and reviewer summaries.
-- **Frontend:** Next.js 16, React 19 and Tailwind v4. The passport is drawn as a security-printed document, and proof results land on it as stamps.
-- **Tests:** 14 circuit tests and 52 backend tests covering tampered proofs, altered public inputs, wrong-payment binding, replay, expiry, revocation, rogue issuers, holder substitution, minors and age requirements, refunds, Vault and payouts.
-
-No paid APIs. Everything except PayPal Sandbox can run offline.
+- **Circuit:** Circom 2 with `circomlib` (BabyJubJub EdDSA verifier, Poseidon hashing, numeric date comparators), ~11k constraints compiled via `snarkjs` for client-side Groth16 proving in ~2 seconds.
+- **Backend:** FastAPI with SQLAlchemy, bcrypt password hashing, JWT tokens, and Node.js cryptographic bridge.
+- **PayPal Integration:** Orders API v2 (create & capture), Payments API v2 (refunds), Payouts API v1, and PayPal Vault (`store_in_vault`, `vault_id`) with `PayPal-Request-Id` idempotency.
+- **Agentic Commerce & Catalog:** Channel3 Product Search API supplying structured, normalized real-time e-commerce catalogs to autonomous AI shopping agents.
+- **Enterprise UI Components:**
+  - `@ag-grid-community/react` for high-performance virtualized cryptographic audit grids.
+  - Bryntum TaskBoard for compliance reviewer lifecycle state visualization.
+- **API Standards & SDKs:** APIMatic-validated OpenAPI 3.0 specification generating idiomatic client libraries across multiple languages.
+- **Cloud Infrastructure:** Multi-service cloud deployment orchestrated through a unified `render.yaml` blueprint with health checks and environment secrets management.
+- **Liveness & Computer Vision:** On-device MediaPipe Face Landmarker WASM model tracking eye-blink blendshapes and nose-to-cheek head turns.
+- **AI Guidance:** Gemini 2.0 Flash / local Ollama (`llama3.2:3b`) for OCR parsing, failed-check explanations, and evidence summarization.
+- **Frontend Architecture:** Next.js 16 (App Router, Turbopack), React 19, and Tailwind CSS v4 with authentic Cotool typography (`Moderat Serif` and `Suisse Intl`).
 
 ## Challenges we ran into
-- Making the proof actually enforce something. Binding it to one payment challenge and adding a deterministic nullifier is what turns a valid proof into a one-time authorization.
-- Keeping the holder secret in the browser while still letting the issuer sign something bound to it. The answer was a Poseidon commitment, which needed the browser hash to match the circuit's hash exactly.
-- An expiry check inside a circuit can only compare against a time that someone supplies. The circuit proves `expires_at > now`, and the server separately checks that `now` is actually current.
-- Being honest about what the AI should and shouldn't do in KYC. We kept it in a guiding and summarizing role and left the decision to a person.
-- Turning liveness from a label into something real without uploading faces, while being honest that a browser-reported result isn't certified.
-- PayPal feature availability by country: Vault and Payouts need a business account in a supported country, which India isn't for Vault.
-- Small real-world things: Windows Tesseract paths, timezone handling of stored expiry dates, and Sandbox account setup in India.
+- **Binding Proofs to One-Time Payments:** Ensuring a valid proof cannot be intercepted and replayed on other payments. Solved by injecting `Poseidon(amount, currency, merchant_id, nonce)` as a public challenge constraint in Circom and enforcing deterministic nullifiers on the server.
+- **Secret Separation:** Keeping the holder secret exclusively in browser local storage while enabling the issuer to sign an attested credential. Solved using Poseidon commitment hashing.
+- **Cross-Service Deployment:** Synchronizing Python/Tesseract backend services with Next.js WASM and proving keys on Render using a single declarative `render.yaml` blueprint.
 
 ## Accomplishments that we're proud of
-- A real ZK circuit and a real payment gate, not a UI badge.
-- The rejected-versus-accepted moment: four kinds of bad proof bounce, and one fresh proof opens PayPal checkout.
-- No raw document or witness data is stored or logged, and every simulated part is labelled as simulated.
+- Real cryptographic enforcement: four distinct malicious proof attacks (*tampered witness, mismatched payment challenge, stale timestamp, replay attempt*) are rejected server-side, keeping PayPal checkout strictly locked.
+- Complete ecosystem integration: seamlessly unifying ZK proofs, PayPal Sandbox, Channel3 agentic commerce, AG Grid analytics, Bryntum workflow boards, and APIMatic SDKs.
+- Zero raw document or PII storage: verifiers only ever receive 9 cryptographic numbers and zero identity data.
 
 ## What we learned
-How Groth16 public inputs, nullifiers and domain separation fit together. Why "verify the proof" is never enough on its own (you also have to check who issued it, for what and when). How to put an LLM into a compliance-sensitive flow without letting it make the decision.
+How domain separation, public inputs, and single-use nullifiers transform zero-knowledge proofs from passive credentials into active, tamper-proof payment authorization gates.
 
 ## What's next for ZK Pass
-- More selective-disclosure claims, such as "resident of country X", from the same credential.
-- On-chain verification and revocation registries as an alternative to the backend verifier.
-- A certified liveness SDK and an authorized KYC partner instead of the demo flow.
-- Letting AI shopping agents carry a ZK Pass, so an agent can prove its user is verified and authorized for one specific purchase without seeing the user's identity.
+- Selective-disclosure credentials for geographic residency (e.g. proof of US/EU residency without disclosing street address).
+- Production certified liveness SDK integration with accredited KYC authorities.
+- On-chain smart contract verifier for decentralized cross-border settlements.
 
 ## Built with
-circom, snarkjs, groth16, poseidon, eddsa, mediapipe, python, fastapi, sqlalchemy, sqlite, node.js, next.js, react, typescript, tailwindcss, tesseract, ollama, llama, gemini, paypal-orders-api, paypal-vault, paypal-payouts, paypal-javascript-sdk
-
-## AI tools and models used
-Ollama running `llama3.2:3b` locally (default), or Google Gemini `gemini-2.0-flash` (free tier). Used for the KYC assistant, OCR field extraction, failed-check explanations and the reviewer evidence summary.
+circom, snarkjs, groth16, poseidon, eddsa, babyjubjub, paypal-orders-api, paypal-vault, paypal-payouts, paypal-javascript-sdk, channel3-api, ag-grid, bryntum, apimatic, render, mediapipe, gemini-ai, python, fastapi, sqlalchemy, nextjs, react, typescript, tailwindcss, tesseract-ocr
 
 ## Links
-- Repo: https://github.com/6289subhasree/paypal_zk
-- Demo video: (paste YouTube link)
+- Repository: https://github.com/6289subhasree/paypal_zk
+- Personal Mirror: https://github.com/ayushkumar2601/zkpass
+- Live Cloud Deployment: https://zkpass.onrender.com
+- Sponsor Integration Guide: docs/TRACKS_AND_INTEGRATIONS.md
 
 ## Testing instructions for judges
-Follow "Run it locally" in the README. Demo accounts: payer@zkpass.dev, merchant@zkpass.dev and reviewer@zkpass.dev, password `zkpass-demo-123`. Pay with a PayPal Sandbox personal account.
+1. Open the live app (or run locally via `npm run dev` in `frontend/` and `uvicorn backend.app.main:app` in `backend/`).
+2. Log in using the 1-click demo accounts:
+   - `payer@zkpass.dev` (Buyer with KYC and active ZK Passport)
+   - `merchant@zkpass.dev` (Payment recipient)
+   - `reviewer@zkpass.dev` (Compliance reviewer with AG Grid & Bryntum access)
+   - Password for all accounts: `zkpass-demo-123`
+3. Visit `/agent` to test the Channel3 autonomous shopping agent and delegated ZK checkout.
+4. Visit `/pay` to test the "Try to break it" proof attack suite and unlock PayPal Sandbox checkout.
+5. Visit `/history` to explore the AG Grid cryptographic audit ledger and export CSV records.
+6. Visit `/review` to test the Bryntum compliance taskboard and approve pending KYC sessions.
+7. Visit `/developers` to inspect the APIMatic OpenAPI specification and merchant SDK snippets.

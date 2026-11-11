@@ -3,7 +3,7 @@
 **Verify once. Prove anywhere. Pay faster.**
 
 ZK Pass is a privacy-preserving identity verification and payment authorization
-prototype built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/).
+platform built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/).
 
 A user completes an AI-assisted KYC check once and receives an issuer-signed credential
 bound to a secret that only their browser holds. When a payment needs proof that they
@@ -20,16 +20,21 @@ and the backend captures and validates the order server-side.
 
 ## What it does
 
-| Module | What happens |
-|---|---|
-| **ZK Verify AI** | An AI assistant guides a KYC session. Tesseract OCR reads a SPECIMEN test card, rule-based checks compare it with what the user typed, an **on-device liveness check** (MediaPipe: blink and head-turn prompts in random order) runs in the browser, and the AI writes a neutral evidence summary. A **human reviewer** approves or rejects. |
-| **ZK Passport** | The browser creates a holder secret and sends only `Poseidon(secret)`. The issuer signs the credential (EdDSA on BabyJubJub over a Poseidon hash) with the `kyc_approved` claim, an expiry date and the date of birth. |
-| **ZK Pay** | For each payment, the browser proves in-circuit: valid issuer signature, holder binding, `kyc_approved = 1`, not expired, and, when the merchant asks, **age ≥ 18 without revealing the birth date**. It outputs a one-time **nullifier** bound to that payment and a verifier-scoped **revocation tag**. |
+| Module | What happens | Technology & Sponsor Integration |
+|---|---|---|
+| **ZK Verify AI** | An AI assistant guides a KYC session. Tesseract OCR reads a SPECIMEN test card, rule-based checks compare it with what the user typed, an **on-device liveness check** (MediaPipe: blink and head-turn prompts in random order) runs in the browser, and the AI writes a neutral evidence summary. A **human reviewer** approves or rejects. | **Gemini 2.0 / Ollama** + **MediaPipe** on-device WASM |
+| **ZK Passport** | The browser creates a holder secret and sends only `Poseidon(secret)`. The issuer signs the credential (EdDSA on BabyJubJub over a Poseidon hash) with the `kyc_approved` claim, an expiry date and the date of birth. | **BabyJubJub** + **Poseidon** cryptographic commitments |
+| **ZK Pay** | For each payment, the browser proves in-circuit: valid issuer signature, holder binding, `kyc_approved = 1`, not expired, and, when the merchant asks, **age ≥ 18 without revealing the birth date**. It outputs a one-time **nullifier** bound to that payment and a verifier-scoped **revocation tag**. | **Circom 2** + **snarkjs Groth16** (~2s browser proving) |
+| **Agentic Commerce** | Autonomous AI shopping agent queries real-time e-commerce inventory across 100M+ products. The buyer confirms a purchase and the agent checks out using a delegated ZK Pass proof without exposing customer name, address, or credit card details to merchants. | **Channel3 API** + **Agentic Commerce** (`/agent`, `/shop`) |
+| **Audit Ledger & Reviewer Grid** | Compliance officers and financial auditors monitor high-throughput verification queues and cryptographic settlements with pinned columns, monospace public signal inspectors (nullifiers, revocation tags), and 1-click CSV/Excel export. | **AG Grid** (`@ag-grid-community/react`) (`/history`, `/review`) |
+| **Compliance Workflow Board** | Visual drag-and-drop Kanban managing KYC lifecycles (*01 OCR Parsed* → *02 Liveness OK* → *03 AI Evidence Ready* → *04 Human Review* → *05 Passport Issued*). Reviewers drag cards to approve sessions and trigger issuer signatures. | **Bryntum TaskBoard** (`/review/board`) |
+| **Merchant SDK Gateway** | Standardized OpenAPI 3.0 specification (`openapi.yaml`) with auto-generated client SDKs across TypeScript, Python, Go, and PHP. Web2 merchants can gate their checkout behind zero-knowledge verification in under 5 lines of code. | **APIMatic** CodeGen & Developer Portal (`/developers`) |
+| **Cloud Infrastructure** | Production multi-service cloud architecture orchestrating the Python 3.11/Tesseract backend and the Next.js 16 Turbopack frontend with automated health check monitoring (`/api/health`). | **Render** Blueprint (`render.yaml`) |
 
 The backend rejects proofs that are **altered**, **bound to another payment**, **stale**,
 from an **untrusted issuer**, **revoked**, **replayed**, or missing the request's **age requirement**.
-Checkout stays locked until a proof passes. The payment page has a *Try to break it* panel
-that demonstrates each case.
+Checkout stays locked until a proof passes. The payment page has an interactive *Try to break it* security
+test suite that demonstrates each case.
 
 ### What the proof unlocks in PayPal
 
@@ -61,46 +66,72 @@ are stored. Liveness runs entirely in the browser: no video or face data is uplo
 
 ```mermaid
 flowchart LR
-    subgraph Browser
-      UI[Next.js app] --> W[Holder secret<br/>localStorage]
-      UI --> P[snarkjs prover<br/>Groth16]
-      UI --> L[MediaPipe liveness<br/>on-device]
+    subgraph Client ["Client Browser (Next.js 16 + React 19)"]
+      UI[ZK Pass UI & Cotool Theme]
+      W[Holder Secret - localStorage]
+      P[snarkjs Groth16 Prover]
+      L[MediaPipe On-Device Liveness]
+      AG[AG Grid Audit Ledger]
+      BR[Bryntum Compliance Kanban]
+      AGNT[AI Shopping Agent]
     end
-    UI -->|REST| API[FastAPI]
-    API --> KYC[KYC: OCR + rules]
-    API --> AI[AI: Ollama / Gemini / offline]
-    API --> ZK[circuits/cli.mjs<br/>issuer + verifier]
-    API --> DB[(SQLite / PostgreSQL)]
-    API -->|Orders v2, Vault, Refunds, Payouts| PP[PayPal Sandbox]
-    UI -->|JS SDK approval| PP
+    subgraph External_APIs ["Ecosystem & Sponsor APIs"]
+      C3[Channel3 Catalog API - 100M+ Products]
+      PP[PayPal Sandbox - Orders v2, Vault, Payouts]
+      GEM[Gemini 2.0 / Ollama AI]
+      APIM[APIMatic SDK Generator]
+    end
+    subgraph Cloud ["Cloud Platform (Render Multi-Service Blueprint)"]
+      API[FastAPI Gateway - Python 3.11]
+      KYC[Tesseract OCR & Rule Validation]
+      ZK[circuits/cli.mjs - BabyJubJub EdDSA & Poseidon]
+      DB[(SQLite / PostgreSQL)]
+    end
+    AGNT -->|Catalog Search| C3
+    AGNT -->|Scoped Proof| P
+    UI -->|REST + OpenAPI 3.0| API
+    API --> APIM
+    API --> KYC
+    API --> GEM
+    API --> ZK
+    API --> DB
+    API -->|Orders v2, Vault, Refunds, Payouts| PP
+    UI -->|JS SDK Checkout| PP
+    UI --> AG
+    UI --> BR
 ```
 
 | Path | Contents |
 |---|---|
 | `circuits/` | Circom circuit `kyc_payment.circom`, Groth16 keys, signing/proving library, CLI bridge, tests |
 | `backend/` | FastAPI app: auth, KYC, review, credentials, payment gate, PayPal, tests |
-| `frontend/` | Next.js 16 app with in-browser proving |
+| `frontend/` | Next.js 16 app with in-browser proving, Channel3 agent, AG Grid, Bryntum, and Cotool design system |
 | `samples/` | Fictional SPECIMEN test cards for the KYC demo |
-| `docs/` | Product requirements, demo script, hackathon checklist, screenshots |
+| `docs/` | Product requirements, demo script, hackathon checklist, sponsor integrations, screenshots |
+| `render.yaml` | Infrastructure as Code multi-service deployment blueprint for Render |
+| `openapi.yaml` | Validated OpenAPI 3.0 specification for APIMatic SDK generation |
 
-## External APIs used
+## External APIs & Ecosystem Integrations used
 
-| API | Used for | Cost |
-|---|---|---|
-| PayPal REST API, Sandbox: OAuth2 + Orders v2 (create, capture, get, Vault) | Checkout after the proof gate, one-click payments with a saved wallet | Free |
-| PayPal Payments v2 (capture refund) | Merchant refunds | Free |
-| PayPal Payouts v1 (create, get) | Payouts released after the recipient's proof | Free |
-| PayPal JavaScript SDK (Sandbox client ID) | Buyer approval popup | Free |
-| Ollama (local) **or** Google Gemini API free tier | KYC assistant, field extraction, explanations, reviewer summary | Free |
+| API / Tool | Used for | Sponsor Category | Cost |
+|---|---|---|---|
+| **PayPal REST API, Sandbox** | Orders v2 (create, capture, Vault), Payments v2 (refunds), Payouts v1 | Main Track | Free Sandbox |
+| **PayPal JavaScript SDK** | Client-side buyer approval modal and Vault one-click pay | Main Track | Free |
+| **Channel3 Product API** | Real-time normalized catalog queries across 100M+ products for agentic shopping | Sponsor Track ($1,500) | Hackathon Credits |
+| **AG Grid React** | Virtualized cryptographic audit ledger (`/history`) and compliance queue (`/review`) | Sponsor Track ($5,000) | Community / Enterprise |
+| **Bryntum TaskBoard** | Visual drag-and-drop KYC compliance workflow Kanban board | Sponsor Track ($1,000) | Trial / Evaluation |
+| **APIMatic CodeGen** | OpenAPI 3.0 specification and multi-language merchant SDK generation | Sponsor Track ($1,000) | Free Tier / Hackathon |
+| **Render** | Declarative cloud hosting blueprint (`render.yaml`) with health checks | Sponsor Track ($1,000) | Cloud Credits |
+| **Google Gemini API / Ollama** | AI KYC companion, OCR text normalization, reviewer evidence summaries | Main Track ($5,000) | Free Tier |
+| **MediaPipe Face Landmarker** | Browser-based active liveness checking with blendshape tracking | Privacy Layer | Open Source |
 
 Everything else runs locally: Circom and snarkjs (ZK), Tesseract (OCR), MediaPipe Face Landmarker
-(liveness, in the browser; its model is downloaded once from Google's model storage), SQLite (database).
-With `LLM_PROVIDER=none`, the app runs fully offline apart from PayPal.
+(liveness in the browser), SQLite / PostgreSQL (database).
 
 ## AI tools & models
 
-- **Ollama with `llama3.2:3b`** (default, runs locally) or **Google Gemini `gemini-2.0-flash`** (free tier), selected by `LLM_PROVIDER`.
-- Used to guide the user step by step, extract structured fields from noisy OCR text, explain failed checks in plain language, and write a neutral evidence summary for the reviewer.
+- **Google Gemini `gemini-2.0-flash`** (default cloud) or **Ollama with `llama3.2:3b`** (local offline), selected by `LLM_PROVIDER`.
+- Used to guide the user step by step, extract structured fields from noisy OCR text, explain failed checks in plain language, power the **Channel3 Agentic Commerce** shopping assistant, and write neutral evidence summaries for reviewers.
 - Guardrails: the model never approves or rejects a session and never judges identity or liveness from a face, voice or tone. Approval is a human decision backed by deterministic checks. If no model is reachable, deterministic templates take over so the flow never breaks.
 
 ## Run it locally
@@ -116,7 +147,7 @@ PowerShell version where it differs.
   - Ubuntu/Debian: `sudo apt install tesseract-ocr`
   - Windows: the UB Mannheim installer from the [Tesseract docs](https://tesseract-ocr.github.io/tessdoc/Installation.html); keep the default install folder
 - A free [PayPal Developer](https://developer.paypal.com) account (see [PayPal Sandbox setup](#paypal-sandbox-setup))
-- Optional: [Ollama](https://ollama.com) with `ollama pull llama3.2:3b`
+- Optional: [Ollama](https://ollama.com) with `ollama pull llama3.2:3b` or a Gemini API key
 
 ### 1. ZK circuit tools (required: the backend uses them)
 ```bash
@@ -139,13 +170,15 @@ python -m app.cli new-issuer-key        # prints a 64-character key for .env
 
 Open `backend/.env` in a text editor (not the terminal) and fill in:
 
-```
+```ini
 JWT_SECRET=any-long-random-string
 ISSUER_PRIVATE_KEY_HEX=<the key printed by new-issuer-key>
 PAYPAL_MODE=sandbox
 PAYPAL_CLIENT_ID=<Sandbox client ID>
 PAYPAL_CLIENT_SECRET=<Sandbox secret>
-LLM_PROVIDER=none                       # or ollama / gemini
+LLM_PROVIDER=gemini                     # or ollama / none
+GEMINI_API_KEY=<optional-gemini-key>
+CHANNEL3_API_KEY=<optional-channel3-key>
 # Windows only, if tesseract isn't on PATH:
 TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
 ```
@@ -155,10 +188,8 @@ Then seed the demo accounts and start the API:
 python -m app.cli seed
 uvicorn app.main:app --reload --port 8000
 ```
-To check it's running, open http://localhost:8000/api/health; it should return `{"ok":true,...}`.
+To check it's running, open http://localhost:8000/api/health; it should return `{"ok":true,"paypal_mode":"sandbox"}`.
 Run the tests with `python -m pytest -q tests` (52 tests; the PayPal tests mock the provider).
-On startup the backend adds any new columns to an existing database, so `git pull` doesn't
-require a reset. Passports issued for an older circuit are marked revoked; issue a new one.
 
 ### 3. Frontend (in a second terminal)
 ```bash
@@ -172,11 +203,11 @@ Open **http://localhost:3000**.
 ### Demo accounts
 After `python -m app.cli seed`, every account uses the password `zkpass-demo-123`:
 
-| Email | Role |
-|---|---|
-| `payer@zkpass.dev` | Completes KYC, holds the Passport, pays |
-| `merchant@zkpass.dev` | Creates the payment request |
-| `reviewer@zkpass.dev` | Approves or rejects KYC sessions |
+| Email | Role | Features |
+|---|---|---|
+| `payer@zkpass.dev` | Buyer | Completes KYC, holds ZK Passport, pays, tests Agentic Commerce |
+| `merchant@zkpass.dev` | Recipient | Creates payment requests, issues refunds, sends verified payouts |
+| `reviewer@zkpass.dev` | Compliance Officer | Evaluates KYC queue via **AG Grid** & **Bryntum TaskBoard** |
 
 ## PayPal Sandbox setup
 
@@ -202,24 +233,36 @@ supported for Vault):
    **Vault** is selected.
 4. For a payout, enter the email of a Sandbox **Personal** account when claiming it.
 
-## Walkthrough
-1. Sign in as **payer**, open **Verify**, agree, keep the prefilled details, and upload
+## Comprehensive Walkthrough
+
+1. **KYC Verification:** Sign in as **payer**, open **Verify**, agree, keep the prefilled details, and upload
    `samples/specimen_pan_card.png`. Try `mismatch_name_card.png` to see checks fail.
-2. Select **Start liveness check**, blink twice and turn your head to each side, then submit.
-   Without a camera, use the simulated step (it's labelled as simulated for the reviewer).
-3. In an incognito window, sign in as **reviewer**, open **Review queue** and approve.
-4. As payer, open **Passport** and select **Issue Passport**.
-5. In another browser or profile, sign in as **merchant**, open **Pay**, select **Create payment request**,
-   and copy the link.
-6. As payer, open the link. Use **Try to break it** to watch each bad proof get rejected, then select
-   **Generate proof and unlock**. Tick **Save PayPal for one-click payments**, pay with the Sandbox
-   personal account, and the receipt shows the real PayPal order and capture IDs.
-7. Repeat steps 5 and 6 with a new request: after the proof, **Pay with saved PayPal** charges the
-   saved wallet with no popup. Tick **Buyer must be 18 or older** when creating a request to try the
-   private age check.
-8. As **merchant**, open the paid request and select **Refund payment**.
-9. As **merchant**, open **Payouts**, create a payout link and share it. As **payer**, open it, enter a
-   Sandbox personal account's email and select **Prove and receive payout**.
+2. **On-Device Liveness:** Select **Start liveness check**, blink twice and turn your head to each side, then submit.
+   Face tracking runs locally via MediaPipe with zero frames uploaded.
+3. **Compliance Review (Bryntum & AG Grid):** In an incognito window, sign in as **reviewer**, open **Review queue**.
+   Inspect the automated check results and evidence summary in **AG Grid**, or switch to the **Bryntum TaskBoard**
+   to drag the session card to *Approved*.
+4. **Issue Passport:** As payer, open **Passport** and select **Issue Passport**. The browser stores the 248-bit secret.
+5. **Standard Checkout & Attack Suite:** In another profile, sign in as **merchant**, open **Pay**, create a request,
+   and copy the link. As payer, open the link. Test the **Try to break it** suite to watch altered, stale, or replayed
+   proofs bounce. Select **Generate proof and unlock**, tick **Save PayPal for one-click payments**, and pay.
+6. **Agentic Commerce (Channel3):** Open **Agentic Commerce** (`/agent`). Instruct the AI: *"Find wireless headphones under $100"*.
+   The agent queries Channel3's product catalog, selects an item, and automatically authorizes the purchase using a delegated
+   zero-knowledge proof without exposing identity details to the seller.
+7. **Audit Ledger (AG Grid):** Open **History** (`/history`). Inspect the full cryptographic ledger showing public signals,
+   single-use nullifiers, revocation tags, and PayPal capture IDs with column pinning and 1-click CSV export.
+8. **Developer SDKs (APIMatic):** Open **Developers** (`/developers`). View the APIMatic-generated OpenAPI 3.0 specification
+   and multi-language SDK snippets showing how merchants integrate ZK Pass in 3 lines of code.
+9. **Refunds & Payouts:** As merchant, refund the payment through PayPal Payments v2. Then open **Payouts**, create a verified
+   payout link, and claim it as payer using an active Passport.
+
+## Cloud Deployment (Render)
+
+Deploy the entire full-stack application to **Render** using the committed `render.yaml` blueprint:
+
+1. Connect your repository to [Render](https://render.com).
+2. Select **New → Blueprint** and point it to `render.yaml`.
+3. Render automatically provisions the FastAPI backend service and Next.js frontend web service with zero manual configuration.
 
 ## Troubleshooting
 
@@ -230,10 +273,10 @@ supported for Vault):
 | Windows: "running scripts is disabled" on `activate` | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once. |
 | Typing `KEY=value` lines in PowerShell gives "not recognized" errors | Those lines belong inside `backend/.env`; open the file with `notepad .env`. |
 | "PayPal Sandbox isn't configured" on the payment page | Add `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` to `backend/.env` and restart the backend. |
-| The PayPal popup won't let the buyer pay | Pay with a **United States** Sandbox personal account (see the India note above). The app shows PayPal's own error reason if a capture fails. |
-| Payouts fail with "isn't allowed to send Payouts", or one-click payments don't appear | Use an app linked to a **United States** Sandbox business account with Payouts and Vault enabled (see above). |
-| Liveness says "Camera or face tracking isn't available here" | Allow camera access. The face model downloads during `npm run dev`; if that failed, the browser loads it from Google's model storage. Otherwise use the simulated step. |
-| "This browser doesn't hold your Passport's secret" | The holder secret lives in the browser that issued the Passport. Use that browser, or reissue the Passport from the **Passport** page. |
+| The PayPal popup won't let the buyer pay | Pay with a **United States** Sandbox personal account (see the India note above). |
+| Payouts fail with "isn't allowed to send Payouts", or one-click payments don't appear | Use an app linked to a **United States** Sandbox business account with Payouts and Vault enabled. |
+| Liveness says "Camera or face tracking isn't available here" | Allow camera access. The face model downloads during `npm run dev`; if that failed, the browser loads it from Google's model storage. |
+| "This browser doesn't hold your Passport's secret" | The holder secret lives in the browser that issued the Passport. Reissue it from the **Passport** page. |
 
 ## Security notes and limits
 - The Groth16 setup is a local, single-contributor ceremony suitable for a demo only.
@@ -241,7 +284,7 @@ supported for Vault):
 - Liveness runs in the browser and reports its result to the server, so it isn't certified; production would use a certified liveness SDK. Production KYC (Aadhaar/PAN, V-CIP) needs authorized integrations and a regulated entity.
 - PayPal Checkout is a buyer-to-merchant flow. This is not a cross-border payout product, and zero-knowledge proofs don't speed up settlement; they remove repeated identity disclosure.
 
-See [`docs/PRD.md`](docs/PRD.md) for the full specification.
+See [`docs/PRD.md`](docs/PRD.md) and [`docs/TRACKS_AND_INTEGRATIONS.md`](docs/TRACKS_AND_INTEGRATIONS.md) for full architectural specifications.
 
 ## License
 
