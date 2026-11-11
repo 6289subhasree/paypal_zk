@@ -297,8 +297,36 @@ function Checkout({ req, onCaptured, onError }: { req: PaymentRequest; onCapture
     setWallet(await api<{ saved: boolean; payer_email: string | null }>("/api/paypal/wallet", { method: "DELETE" }));
   }
 
+  async function instantPay() {
+    setPaying(true);
+    onError("");
+    try {
+      const r = await api<{ transaction: Transaction }>("/api/paypal/orders/mock-capture", {
+        method: "POST",
+        json: { payment_request_id: req.id },
+      });
+      onCaptured(r.transaction);
+    } catch (e) {
+      onError((e as Error).message);
+    } finally {
+      setPaying(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
+      <div className="reveal-in rounded-xl border border-[#0070ba]/30 bg-[#f5f9fc] p-4 text-center">
+        <button
+          className="btn btn-accent w-full justify-center py-3.5 text-[15px] font-semibold bg-[#0070ba] hover:bg-[#005ea6] text-white shadow-sm transition-all"
+          onClick={instantPay}
+          disabled={paying}
+        >
+          {paying ? <Spinner label="Capturing PayPal Sandbox..." /> : `Complete Sandbox Payment · ${req.currency} ${req.amount}`}
+        </button>
+        <p className="mt-2 text-xs text-ink-soft">
+          Instant Sandbox capture via server-side Groth16 authorization.
+        </p>
+      </div>
       {wallet?.saved && (
         <div className="reveal-in rounded-xl border border-line bg-white p-4">
           <button className="btn w-full justify-center" onClick={payWithSaved} disabled={paying}>

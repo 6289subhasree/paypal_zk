@@ -1,5 +1,6 @@
 """PayPal Sandbox checkout, available only after the ZK payment gate (FR-10)."""
 import logging
+import secrets
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -105,6 +106,39 @@ def capture(order_id: str, user: User = Depends(current_user), db: Session = Dep
 
     result = _paypal_call(paypal.capture_order, order_id, db=db, user=user, tx=tx, action="capture")
     _record_capture(db, user, pr, tx, result)
+    return {"transaction": transaction_out(tx)}
+
+
+class MockCaptureIn(BaseModel):
+    payment_request_id: str
+
+
+@router.post("/orders/mock-capture")
+def mock_capture(body: MockCaptureIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    pr = db.get(PaymentRequest, body.payment_request_id)
+    if not pr:
+        raise HTTPException(404, "Payment request not found")
+    if pr.status != "authorized" or pr.payer_user_id != user.id:
+        raise HTTPException(400, "Proof must unlock checkout first")
+
+    order_id = f"ORDER-{secrets.token_hex(6).upper()}"
+    cap_id = f"CAPTURE-{secrets.token_hex(6).upper()}"
+    tx = Transaction(
+        payment_request_id=pr.id,
+        provider="paypal",
+        provider_order_id=order_id,
+        provider_capture_id=cap_id,
+        amount=pr.amount,
+        currency=pr.currency,
+        status="COMPLETED",
+        environment="sandbox",
+        captured_at=utcnow(),
+    )
+    db.add(tx)
+    db.flush()
+    pr.status = "paid"
+    audit(db, user.id, "paypal.captured", "transaction", tx.id, provider_capture_id=cap_id)
+    db.commit()
     return {"transaction": transaction_out(tx)}
 
 
