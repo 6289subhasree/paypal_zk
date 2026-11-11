@@ -71,7 +71,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             {mode === "register" && <span className="mt-1 block text-sm text-ink-soft">At least 8 characters.</span>}
           </label>
           <ErrorNote>{error}</ErrorNote>
-          <button className="btn btn-accent w-full justify-center" disabled={busy}>
+          <button type="submit" className="btn btn-accent w-full justify-center" disabled={busy}>
             {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
           </button>
           <p className="text-center text-sm text-ink-soft">
