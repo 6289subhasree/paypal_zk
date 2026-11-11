@@ -16,7 +16,25 @@ and the backend captures and validates the order server-side.
 
 **Demo video:** _link coming soon_
 
-![ZK Pass landing page](docs/screenshots/landing.png)
+![ZK Pass landing page](public_pics/landing.png)
+
+## Visual Tour & Interface Walkthrough
+
+| Landing Page & Zero-Knowledge Architecture | Feature Showcase & Compliance Protocols |
+|---|---|
+| ![Landing Page](public_pics/landing.png) | ![Landing Features](public_pics/landing2.png) |
+
+| Persona Authentication (Payer, Merchant, Reviewer) | Real-Time User Dashboard |
+|---|---|
+| ![Persona Authentication](public_pics/zkpayer.png) | ![Dashboard Overview](public_pics/dashboard.png) |
+
+| AI-Guided KYC Verification (OCR & On-Device Liveness) | Issued ZK Passport (Poseidon Secret & BabyJubJub EdDSA) |
+|---|---|
+| ![AI KYC Verification](public_pics/verify.png) | ![ZK Passport Credential](public_pics/passport.png) |
+
+| ZK Proof Gate, Attack Suite & PayPal Unlock | Cryptographic Payment History & Audit Ledger |
+|---|---|
+| ![Zero-Knowledge Payment Gate](public_pics/pay.png) | ![Cryptographic Audit Ledger](public_pics/paymenthistory.png) |
 
 ## What it does
 
