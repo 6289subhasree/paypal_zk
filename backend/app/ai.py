@@ -47,7 +47,10 @@ def _chat(messages: list[dict], want_json: bool = False) -> str | None:
         if settings.llm_provider == "ollama":
             r = httpx.post(f"{settings.ollama_url}/api/chat", timeout=60, json={
                 "model": settings.ollama_model, "messages": messages, "stream": False,
-                "options": {"temperature": 0.2}, **({"format": "json"} if want_json else {}),
+                # Short answers and a model kept in memory keep replies fast on a laptop CPU.
+                "keep_alive": "30m",
+                "options": {"temperature": 0.2, "num_predict": 300, "num_ctx": 2048},
+                **({"format": "json"} if want_json else {}),
             })
             r.raise_for_status()
             return r.json()["message"]["content"]
